@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:scheduler="clr-namespace:Syncfusion.Maui.Scheduler;assembly=Syncfusion.Maui.Scheduler"
+             xmlns:toolbar="clr-namespace:Syncfusion.Maui.Toolbar;assembly=Syncfusion.Maui.Toolbar"
+             x:Class="SchedulerPDFSample.ShiftSchedulePage"
+             Title="Shift Scheduler">
+    <VerticalStackLayout Spacing="0">
+        <toolbar:SfToolbar HeightRequest="56" BackgroundColor="Transparent" Padding="8,0" Tapped="OnToolbarTapped">
+            <toolbar:SfToolbar.Items>
+                <toolbar:SfToolbarItem Alignment="Center" Text="Export PDF" Name="ExportPdfButton">
+                    <toolbar:SfToolbarItem.Icon>
+                        <FontImageSource Glyph="&#xE8A7;" FontFamily="FluentSystemIcons-Regular"/>
+                    </toolbar:SfToolbarItem.Icon>
+                </toolbar:SfToolbarItem>
+            </toolbar:SfToolbar.Items>
+        </toolbar:SfToolbar>
+
+        <scheduler:SfScheduler x:Name="Scheduler"
+                                HeightRequest="600"
+                                View="Week" />
+    </VerticalStackLayout>
+</ContentPage>
