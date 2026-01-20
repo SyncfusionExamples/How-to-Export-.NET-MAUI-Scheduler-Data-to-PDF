@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:scheduler="clr-namespace:Syncfusion.Maui.Scheduler;assembly=Syncfusion.Maui.Scheduler"
+    xmlns:vm="clr-namespace:ExamSchedulerSample"
+    x:Class="ExamSchedulerSample.SchedulePage">
+
+    <ContentPage.BindingContext>
+        <vm:ScheduleViewModel />
+    </ContentPage.BindingContext>
+
+    <Grid RowDefinitions="Auto,*" Padding="10">
+
+        <HorizontalStackLayout Spacing="8">
+            <Button Text="Export PDF" Clicked="OnExportPdfClicked"/>
+            <Button Text="Preview/Print" Clicked="OnPreviewPrintClicked"/>
+        </HorizontalStackLayout>
+
+        <scheduler:SfScheduler
+            Grid.Row="1"
+            x:Name="ExamScheduler"
+            View="TimelineWeek"
+            AppointmentsSource="{Binding Appointments}"
+            FirstDayOfWeek="Monday">
+
+            <!-- Working hours and intervals -->
+            <scheduler:SfScheduler.TimelineView>
+                <scheduler:SchedulerTimelineView
+                    StartHour="8"
+                    EndHour="18"
+                    TimeInterval="01:00:00"
+                    TimeIntervalWidth="90" />
+            </scheduler:SfScheduler.TimelineView>
+
+            <!-- Single appointment mapping (includes ResourceIds) -->
+            <scheduler:SfScheduler.AppointmentMapping>
+                <scheduler:SchedulerAppointmentMapping
+                    StartTime="Start"
+                    EndTime="End"
+                    Subject="Subject"
+                    Notes="Notes"
+                    Id="Id"
+                    Background="Background"
+                    ResourceIds="ResourceIds" />
+            </scheduler:SfScheduler.AppointmentMapping>
+
+            <!-- Group by Hall (resource view) -->
+            <scheduler:SfScheduler.ResourceView>
+                <scheduler:SchedulerResourceView Resources="{Binding Halls}">
+                    <scheduler:SchedulerResourceView.Mapping>
+                        <scheduler:SchedulerResourceMapping
+                            Id="Id"
+                            Name="Name"
+                            Background="Color" />
+                    </scheduler:SchedulerResourceView.Mapping>
+                </scheduler:SchedulerResourceView>
+            </scheduler:SfScheduler.ResourceView>
+
+        </scheduler:SfScheduler>
+    </Grid>
+</ContentPage>
