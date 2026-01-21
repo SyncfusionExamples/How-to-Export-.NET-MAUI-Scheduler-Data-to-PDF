@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 using System.Linq;
@@ -6,11 +5,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
-
 using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
 using Syncfusion.Pdf.Grid;
-using Syncfusion.Drawing;
 using PointF = Syncfusion.Drawing.PointF;
 
 namespace ExamSchedulerSample.Services
@@ -76,7 +73,7 @@ namespace ExamSchedulerSample.Services
             ms.Position = 0;
 
             // (Optional) Show with Syncfusion PDF Viewer and allow printing
-            var page = new Pages.PdfPreviewPage(ms);
+            var page = new PdfPreviewPage(ms);
             await nav.PushAsync(page);
         }
 

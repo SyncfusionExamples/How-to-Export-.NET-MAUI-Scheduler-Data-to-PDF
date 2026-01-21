@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="ExamSchedulerSample.csproj" />
+  <Project Path="ExamSchedulerSample.csproj">
+    <BuildType Project="Release" />
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>

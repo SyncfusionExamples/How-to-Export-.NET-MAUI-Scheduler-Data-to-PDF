@@ -1,4 +1,3 @@
-
 using Microsoft.Maui.Controls.PlatformConfiguration;
 using System;
 using System.IO;
@@ -7,7 +6,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
-namespace ExamSchedulerSample.Services
+namespace ExamSchedulerSample
 {
     public static partial class SaveService
     {

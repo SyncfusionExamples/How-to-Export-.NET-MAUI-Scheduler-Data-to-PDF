@@ -13,12 +13,12 @@ public static class MauiProgram
 
         builder
             .UseMauiApp<App>()
+            .ConfigureSyncfusionCore()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            })
-            .ConfigureSyncfusionCore(); // <-- required for Syncfusion MAUI controls
+            });
 
         return builder.Build();
     }
