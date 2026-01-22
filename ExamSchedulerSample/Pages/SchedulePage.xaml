@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:scheduler="clr-namespace:Syncfusion.Maui.Scheduler;assembly=Syncfusion.Maui.Scheduler"
     xmlns:local="clr-namespace:ExamSchedulerSample"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
     x:Class="ExamSchedulerSample.SchedulePage">
 
     <ContentPage.BindingContext>
@@ -19,21 +20,10 @@
 
         <scheduler:SfScheduler
             Grid.Row="1"
-            x:Name="ExamScheduler"
-            View="TimelineWeek"
             AppointmentsSource="{Binding Appointments}"
-            FirstDayOfWeek="Monday">
+            View="TimelineWeek"
+            DisplayDate="{Binding DisplayDate}">
 
-            <!-- Working hours and intervals -->
-            <scheduler:SfScheduler.TimelineView>
-                <scheduler:SchedulerTimelineView
-                    StartHour="8"
-                    EndHour="18"
-                    TimeInterval="01:00:00"
-                    TimeIntervalWidth="90" />
-            </scheduler:SfScheduler.TimelineView>
-
-            <!-- Single appointment mapping (includes ResourceIds) -->
             <scheduler:SfScheduler.AppointmentMapping>
                 <scheduler:SchedulerAppointmentMapping
                     StartTime="Start"
@@ -41,22 +31,59 @@
                     Subject="Subject"
                     Notes="Notes"
                     Id="Id"
-                    Background="Background"
-                    ResourceIds="ResourceIds" />
+                    ResourceIds="ResourceIds"
+                    Background="BackgroundBrush" />
             </scheduler:SfScheduler.AppointmentMapping>
 
-            <!-- Group by Hall (resource view) -->
-            <scheduler:SfScheduler.ResourceView>
-                <scheduler:SchedulerResourceView Resources="{Binding Halls}">
-                    <scheduler:SchedulerResourceView.Mapping>
-                        <scheduler:SchedulerResourceMapping
-                            Id="Id"
-                            Name="Name"
-                            Background="Color" />
-                    </scheduler:SchedulerResourceView.Mapping>
-                </scheduler:SchedulerResourceView>
-            </scheduler:SfScheduler.ResourceView>
+            <scheduler:SfScheduler.TimelineView>
+                <scheduler:SchedulerTimelineView
+                    StartHour="8"
+                    EndHour="18"
+                    TimeInterval="01:00:00"
+                    TimeIntervalWidth="120">
+
+                    <scheduler:SchedulerTimelineView.AppointmentTemplate>
+                        <DataTemplate>
+
+                            <!-- IMPORTANT:
+                                  In TimelineView, the correct binding for mapped background is:
+                                  {Binding Appointment.Background}
+                                  NOT simply {Binding Background} -->
+                            <Border
+                                Background="{Binding Appointment.Background}"
+                                Stroke="#66000000"
+                                StrokeThickness="1"
+                                Padding="6">
+
+                                <Border.StrokeShape>
+                                    <shapes:RoundRectangle CornerRadius="6" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="2">
+
+                                    <Label
+                                        Text="{Binding Subject}"
+                                        FontAttributes="Bold"
+                                        TextColor="White"
+                                        FontSize="13"
+                                        LineBreakMode="TailTruncation" />
+
+                                    <Label
+                                        Text="{Binding Notes}"
+                                        FontSize="11"
+                                        TextColor="White"
+                                        Opacity="0.95"
+                                        LineBreakMode="TailTruncation" />
+
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </scheduler:SchedulerTimelineView.AppointmentTemplate>
+
+                </scheduler:SchedulerTimelineView>
+            </scheduler:SfScheduler.TimelineView>
 
         </scheduler:SfScheduler>
+
     </Grid>
 </ContentPage>

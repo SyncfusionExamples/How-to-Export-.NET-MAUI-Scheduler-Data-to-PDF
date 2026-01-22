@@ -1,8 +1,187 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="ExamSchedulerSample.MainPage"
-             x:Name="OverviewPage">
+<ContentPage
+    x:Class="ExamSchedulerSample.MainPage"
+    x:Name="OverviewPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="Transparent">
 
-    <Button Text="Scheduler page" HeightRequest="50" Clicked="Button_Clicked"/>
+    <!-- ===== Page Resources ===== -->
+    <ContentPage.Resources>
+        <LinearGradientBrush x:Key="HeroGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F2F6FF" Offset="0.0" />
+            <GradientStop Color="#EAF1FF" Offset="0.35" />
+            <GradientStop Color="#E6F6FF" Offset="0.7" />
+            <GradientStop Color="#EAFDF6" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style TargetType="Button" x:Key="PrimaryButton">
+            <Setter Property="HeightRequest" Value="52" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="BackgroundColor" Value="#3A69E0" />
+        </Style>
+
+        <Style TargetType="Button" x:Key="SecondaryButton">
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextColor" Value="#3A69E0" />
+            <Setter Property="BackgroundColor" Value="#F0F4FF" />
+        </Style>
+
+        <Style TargetType="Label" x:Key="TitleStyle">
+            <Setter Property="TextColor" Value="#1C2A4B" />
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="FontSize" Value="28"/>
+        </Style>
+
+        <Style TargetType="Label" x:Key="SubtitleStyle">
+            <Setter Property="TextColor" Value="#4A5A7A" />
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <!-- ===== Background ===== -->
+    <Grid>
+        <Grid.Background>
+            <StaticResource Key="HeroGradient" />
+        </Grid.Background>
+
+        <!-- Decorative top-right swoosh -->
+        <shapes:Path
+            HorizontalOptions="End"
+            VerticalOptions="Start"
+            Margin="0,0,-40,0"
+            Opacity="0.18"
+            Fill="#3A69E0">
+            <shapes:Path.Data>
+                <shapes:PathGeometry>
+                    <shapes:PathFigure StartPoint="0,0" IsClosed="True">
+                        <shapes:LineSegment Point="280,0"/>
+                        <shapes:LineSegment Point="320,140"/>
+                        <shapes:QuadraticBezierSegment Point1="140,220" Point2="0,120"/>
+                    </shapes:PathFigure>
+                </shapes:PathGeometry>
+            </shapes:Path.Data>
+        </shapes:Path>
+
+        <!-- ===== Content Card ===== -->
+        <Grid Padding="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Center Card -->
+            <Grid
+                Grid.Row="0"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                WidthRequest="720"
+                MaximumWidthRequest="720">
+
+                <!-- MAUI: use attached property, not a collection -->
+                <Grid.Shadow>
+                    <Shadow Brush="#40000000" Radius="18" Opacity="0.25" Offset="0,10"/>
+                </Grid.Shadow>
+
+                <Border
+                    BackgroundColor="#FAFAFF"
+                    Stroke="#18000000"
+                    StrokeThickness="1"
+                    Padding="24">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20"/>
+                    </Border.StrokeShape>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="24">
+                        <!-- Left: Title & CTAs -->
+                        <VerticalStackLayout Spacing="14" Grid.Column="0" VerticalOptions="Center">
+                            <Label Text="Exam Scheduler" Style="{StaticResource TitleStyle}" />
+                            <Label
+                                Text="Plan date-wise exams, allocate halls, and rotate invigilators—with a printable PDF in one tap."
+                                Style="{StaticResource SubtitleStyle}" />
+
+                            <VerticalStackLayout Spacing="12" Margin="0,8,0,0">
+                                <Button
+                                    Text="Open Exam Schedule"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Clicked="OnOpenSchedulerClicked" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Right: Illustration -->
+                        <Grid Grid.Column="1">
+                            <Border
+                                BackgroundColor="#F3F6FF"
+                                Stroke="#22000000"
+                                StrokeThickness="1"
+                                Padding="16">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="16"/>
+                                </Border.StrokeShape>
+
+                                <Grid>
+                                    <!-- Timeline bars -->
+                                    <VerticalStackLayout Spacing="8" Padding="0,4">
+                                        <Border HeightRequest="18" BackgroundColor="#3A69E0" StrokeThickness="0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="9"/>
+                                            </Border.StrokeShape>
+                                        </Border>
+                                        <Border HeightRequest="18" BackgroundColor="#8B5CF6" StrokeThickness="0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="9"/>
+                                            </Border.StrokeShape>
+                                        </Border>
+                                        <Border HeightRequest="18" BackgroundColor="#0EA5E9" StrokeThickness="0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="9"/>
+                                            </Border.StrokeShape>
+                                        </Border>
+                                        <Border HeightRequest="18" BackgroundColor="#10B981" StrokeThickness="0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="9"/>
+                                            </Border.StrokeShape>
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <!-- Circular accent -->
+                                    <Grid HorizontalOptions="End" VerticalOptions="End" Margin="0,0,-6,-6">
+                                        <shapes:Ellipse WidthRequest="80" HeightRequest="80" Fill="#203A69E0" />
+                                        <shapes:Ellipse WidthRequest="52" HeightRequest="52" Fill="#403A69E0" Margin="14"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Footer -->
+            <Grid Grid.Row="1" Padding="8,16,8,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label
+                    Grid.Column="0"
+                    Text="© 2026 • Exam Scheduler"
+                    TextColor="#61708C"
+                    FontSize="12" />
+
+                <HorizontalStackLayout Grid.Column="1" Spacing="10">
+                    <Label Text="PDF powered by Syncfusion" TextColor="#95A3BD" FontSize="12" />
+                    <BoxView WidthRequest="4" HeightRequest="4" CornerRadius="2" Color="#B8C2D6" VerticalOptions="Center"/>
+                    <!-- NAME THIS so code-behind can set Version -->
+                    <Label x:Name="AppVersionLabel" Text="v" TextColor="#95A3BD" FontSize="12" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Grid>
+    </Grid>
 </ContentPage>

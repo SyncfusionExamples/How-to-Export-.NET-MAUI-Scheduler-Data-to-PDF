@@ -1,4 +1,9 @@
-﻿namespace ExamSchedulerSample
+﻿using System;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.ApplicationModel;
+using ExamSchedulerSample.Services;
+
+namespace ExamSchedulerSample
 {
     public partial class MainPage : ContentPage
     {
@@ -7,9 +12,17 @@
             InitializeComponent();
         }
 
-        private void Button_Clicked(object sender, EventArgs e)
+        protected override async void OnAppearing()
         {
-            Navigation.PushAsync(new SchedulePage());
+            base.OnAppearing();
+
+            this.Opacity = 0;
+            await this.FadeTo(1, 350, Easing.CubicOut);
+        }
+
+        private async void OnOpenSchedulerClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new SchedulePage());
         }
     }
 }
