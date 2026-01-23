@@ -1,6 +1,4 @@
-﻿
-// File: Services/PdfExportService.cs
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
@@ -10,166 +8,182 @@ using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
 using Syncfusion.Pdf.Grid;
 
-// Type aliases for Syncfusion.Drawing primitives
 using PointF = Syncfusion.Drawing.PointF;
 using RectangleF = Syncfusion.Drawing.RectangleF;
 using SizeF = Syncfusion.Drawing.SizeF;
 
 namespace ExamSchedulerSample.Services
 {
+    /// <summary>
+    /// Provides PDF export and preview services for exam schedule data,
+    /// including timetable, invigilator duties, and hall availability.
+    /// </summary>
     public static class PdfExportService
     {
-        // --------------------------------------------------------------------
-        // Public entry points
-        // --------------------------------------------------------------------
+        /// <summary>
+        /// Builds the exam schedule PDF and invokes the platform save/view service.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task ExportAllAsync()
         {
-            var bytes = BuildPdfBytes(); // single source of truth for both Export & Preview
-            using var ms = new MemoryStream(bytes);
-            ms.Position = 0;
-            await SaveService.SaveAndViewAsync("ExamSchedule.pdf", "application/pdf", ms);
-        }
-
-        public static async Task PreviewAndPrintAsync(INavigation nav)
-        {
-            var bytes = BuildPdfBytes(); // same content as Export
-            // Pass a fresh MemoryStream; the preview page will take ownership/copy defensively
-            await nav.PushAsync(new PdfPreviewPage(new MemoryStream(bytes)));
-        }
-
-        // --------------------------------------------------------------------
-        // PDF builder (shared)
-        // --------------------------------------------------------------------
-        private static byte[] BuildPdfBytes()
-        {
-            // Collect data
-            var halls = SampleDataService.GetHalls();
-            var invs = SampleDataService.GetInvigilators();
-            var appts = SampleDataService.GetExamAppointments();
-
-            // Derived tables
-            var dutyRows = BuildInvigilatorDuties(appts, halls, invs);
-            var availabilityRows = BuildHallAvailability(appts, halls);
-            var timetableRows = BuildTimetableRows(appts); // uses InvigilatorName directly
-
-            using var doc = new PdfDocument
-            {
-                PageSettings = { Size = PdfPageSize.A4 } // explicit size for predictability
-            };
-
-            // ---- Cover page ----
-            var cover = doc.Pages.Add();
-            DrawCover(cover.Graphics);
-
-            // ---- Section 1: Date-wise Exam Timetable ----
-            var sec1 = doc.Pages.Add();
-            float afterHeaderY = DrawSectionHeader(sec1.Graphics, "1) Date-wise Exam Timetable");
-            DrawGrid(sec1, timetableRows,
-                new[] { "Date", "Session", "Course", "Hall", "Invigilator" },
-                afterHeaderY + 8);
-
-            // ---- Section 2: Invigilator Duty Roster ----
-            var sec2 = doc.Pages.Add();
-            afterHeaderY = DrawSectionHeader(sec2.Graphics, "2) Invigilator Duty Roster");
-            DrawGrid(sec2, dutyRows,
-                new[] { "Date", "Session", "Invigilator", "Hall", "Course" },
-                afterHeaderY + 8);
-
-            // ---- Section 3: Hall Availability ----
-            var sec3 = doc.Pages.Add();
-            afterHeaderY = DrawSectionHeader(sec3.Graphics, "3) Exam Hall Availability");
-            DrawGrid(sec3, availabilityRows,
-                new[] { "Date", "Session", "Hall", "Capacity", "Status" },
-                afterHeaderY + 8);
-
-            // Save to bytes
-            using var ms = new MemoryStream();
-            doc.Save(ms);
-            return ms.ToArray();
-        }
-
-        // --------------------------------------------------------------------
-        // Drawing helpers
-        // --------------------------------------------------------------------
-        private static void DrawCover(PdfGraphics g)
-        {
-            // Margins and client size
-            float margin = 48f; // ~0.67 inch
-            SizeF client = g.ClientSize;
-            float left = margin;
-            float top = margin;
-            float right = client.Width - margin;
-            float width = right - left;
-
-            // Banner rectangle (ensures page never looks visually empty)
-            float bannerHeight = 88f;
-            var bannerRect = new RectangleF(left, top, width, bannerHeight);
-            g.DrawRectangle(PdfBrushes.LightSteelBlue, bannerRect);
-            g.DrawRectangle(PdfPens.SlateGray, bannerRect);
-
-            // Title + timestamp inside banner
-            var titleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 22, PdfFontStyle.Bold);
-            var subFont = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
-            g.DrawString("University Exam Schedule", titleFont, PdfBrushes.DarkBlue, new PointF(left + 14, top + 24));
-            g.DrawString($"Generated: {DateTime.Now:dd-MMM-yyyy HH:mm}", subFont, PdfBrushes.Gray, new PointF(left + 14, top + 56));
-
-            // Contents list
-            float y = top + bannerHeight + 28f;
-            var h2 = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
-            var p = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
-
-            g.DrawString("Contents", h2, PdfBrushes.Black, new PointF(left, y));
-            y += 16;
-            g.DrawString("• Date-wise Exam Timetable", p, PdfBrushes.Black, new PointF(left, y)); y += 14;
-            g.DrawString("• Invigilator Duty Roster", p, PdfBrushes.Black, new PointF(left, y)); y += 14;
-            g.DrawString("• Exam Hall Availability", p, PdfBrushes.Black, new PointF(left, y));
+            var pdfBytes = CreatePdfBytes();
+            using var stream = new MemoryStream(pdfBytes);
+            stream.Position = 0;
+            await SaveService.SaveAndViewAsync("ExamSchedule.pdf", "application/pdf", stream);
         }
 
         /// <summary>
-        /// Draw a bold section header at standard margins; returns the bottom Y of the header block.
+        /// Builds the exam schedule PDF and navigates to a preview page that can handle printing/sharing.
         /// </summary>
-        private static float DrawSectionHeader(PdfGraphics g, string text)
+        /// <param name="navigation">The MAUI navigation instance used to push the preview page.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task PreviewAndPrintAsync(INavigation navigation)
         {
-            float margin = 48f;
+            var pdfBytes = CreatePdfBytes();
+            await navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes)));
+        }
+
+        /// <summary>
+        /// Creates the PDF document bytes for the complete exam export,
+        /// including a cover and three sections: timetable, duties, and hall availability.
+        /// </summary>
+        /// <returns>The PDF document as a byte array.</returns>
+        private static byte[] CreatePdfBytes()
+        {
+            var halls = SampleDataService.GetHalls();
+            var invigilators = SampleDataService.GetInvigilators();
+            var appointments = SampleDataService.GetExamAppointments();
+
+            var invigilatorDutyRows = BuildInvigilatorDutyRows(appointments, halls, invigilators);
+            var hallAvailabilityRows = BuildHallAvailabilityRows(appointments, halls);
+            var timetableRows = BuildTimetableRowsData(appointments);
+
+            using var document = new PdfDocument
+            {
+                PageSettings = { Size = PdfPageSize.A4 }
+            };
+
+            // Cover
+            var coverPage = document.Pages.Add();
+            DrawCover(coverPage.Graphics);
+
+            // Section 1: Timetable
+            var timetablePage = document.Pages.Add();
+            float afterHeaderY = DrawSectionHeader(timetablePage.Graphics, "1) Date-wise Exam Timetable");
+            DrawGridWithPagination(
+                timetablePage,
+                timetableRows,
+                new[] { "Date", "Session", "Course", "Hall", "Invigilator" },
+                afterHeaderY + 8f);
+
+            // Section 2: Invigilator Duty Roster
+            var dutiesPage = document.Pages.Add();
+            afterHeaderY = DrawSectionHeader(dutiesPage.Graphics, "2) Invigilator Duty Roster");
+            DrawGridWithPagination(
+                dutiesPage,
+                invigilatorDutyRows,
+                new[] { "Date", "Session", "Invigilator", "Hall", "Course" },
+                afterHeaderY + 8f);
+
+            // Section 3: Hall Availability
+            var availabilityPage = document.Pages.Add();
+            afterHeaderY = DrawSectionHeader(availabilityPage.Graphics, "3) Exam Hall Availability");
+            DrawGridWithPagination(
+                availabilityPage,
+                hallAvailabilityRows,
+                new[] { "Date", "Session", "Hall", "Capacity", "Status" },
+                afterHeaderY + 8f);
+
+            using var memoryStream = new MemoryStream();
+            document.Save(memoryStream);
+            return memoryStream.ToArray();
+        }
+
+        /// <summary>
+        /// Draws the cover page with a banner, title, generation timestamp, and a simple contents list.
+        /// </summary>
+        /// <param name="graphics">The graphics context of the current PDF page.</param>
+        private static void DrawCover(PdfGraphics graphics)
+        {
+            const float margin = 48f;
+            SizeF clientSize = graphics.ClientSize;
+            float left = margin;
+            float top = margin;
+            float right = clientSize.Width - margin;
+            float width = right - left;
+
+            const float bannerHeight = 88f;
+            var bannerRect = new RectangleF(left, top, width, bannerHeight);
+            graphics.DrawRectangle(PdfBrushes.LightSteelBlue, bannerRect);
+            graphics.DrawRectangle(PdfPens.SlateGray, bannerRect);
+
+            var titleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 22, PdfFontStyle.Bold);
+            var subtitleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
+            graphics.DrawString("University Exam Schedule", titleFont, PdfBrushes.DarkBlue, new PointF(left + 14, top + 24));
+            graphics.DrawString($"Generated: {DateTime.Now:dd-MMM-yyyy HH:mm}", subtitleFont, PdfBrushes.Gray, new PointF(left + 14, top + 56));
+
+            float y = top + bannerHeight + 28f;
+            var headingFont = new PdfStandardFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold);
+            var paragraphFont = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
+
+            graphics.DrawString("Contents", headingFont, PdfBrushes.Black, new PointF(left, y));
+            y += 16;
+            graphics.DrawString("• Date-wise Exam Timetable", paragraphFont, PdfBrushes.Black, new PointF(left, y)); y += 14;
+            graphics.DrawString("• Invigilator Duty Roster", paragraphFont, PdfBrushes.Black, new PointF(left, y)); y += 14;
+            graphics.DrawString("• Exam Hall Availability", paragraphFont, PdfBrushes.Black, new PointF(left, y));
+        }
+
+        /// <summary>
+        /// Draws a bold section header at standard margins and returns the bottom Y coordinate of the header block.
+        /// </summary>
+        /// <param name="graphics">The graphics context of the current PDF page.</param>
+        /// <param name="text">The header text to render.</param>
+        /// <returns>The Y coordinate immediately below the header, suitable for content placement.</returns>
+        private static float DrawSectionHeader(PdfGraphics graphics, string text)
+        {
+            const float margin = 48f;
             float x = margin;
             float y = margin;
 
-            var hFont = new PdfStandardFont(PdfFontFamily.Helvetica, 16, PdfFontStyle.Bold);
-            g.DrawString(text, hFont, PdfBrushes.Black, new PointF(x, y));
+            var headerFont = new PdfStandardFont(PdfFontFamily.Helvetica, 16, PdfFontStyle.Bold);
+            graphics.DrawString(text, headerFont, PdfBrushes.Black, new PointF(x, y));
             y += 18;
-            g.DrawLine(PdfPens.Gray, new PointF(x, y + 4), new PointF(g.ClientSize.Width - margin, y + 4));
+            graphics.DrawLine(PdfPens.Gray, new PointF(x, y + 4), new PointF(graphics.ClientSize.Width - margin, y + 4));
             return y + 6;
         }
 
         /// <summary>
-        /// Draw a PdfGrid with paginate layout, starting at (margin, startY).
+        /// Draws a <see cref="PdfGrid"/> with pagination support starting at (margin, <paramref name="startY"/>).
+        /// Column headers are supplied explicitly via <paramref name="headers"/>.
         /// </summary>
-        private static void DrawGrid<T>(PdfPage page, IEnumerable<T> rows, string[] headers, float startY)
+        /// <typeparam name="T">The row item type (anonymous types and POCOs are supported).</typeparam>
+        /// <param name="page">The PDF page to draw on.</param>
+        /// <param name="rows">The enumerable data rows to bind to the grid.</param>
+        /// <param name="headers">The array of column header texts.</param>
+        /// <param name="startY">The Y coordinate to start drawing the grid.</param>
+        private static void DrawGridWithPagination<T>(PdfPage page, IEnumerable<T> rows, string[] headers, float startY)
         {
-            float margin = 48f;
+            const float margin = 48f;
 
             var grid = new PdfGrid
             {
                 Style = { CellPadding = new PdfPaddings(4, 4, 4, 4) }
             };
 
-            // Bind data
-            var list = rows?.ToList() ?? new List<T>();
-            grid.DataSource = list;
+            var rowList = rows?.ToList() ?? new List<T>();
+            grid.DataSource = rowList;
 
-            // Ensure there is a header row and set captions
             if (grid.Headers.Count == 0)
             {
                 grid.Headers.Add(1);
             }
 
-            var header = grid.Headers[0];
-            for (int i = 0; i < Math.Min(header.Cells.Count, headers.Length); i++)
+            var headerRow = grid.Headers[0];
+            for (int i = 0; i < Math.Min(headerRow.Cells.Count, headers.Length); i++)
             {
-                header.Cells[i].Value = headers[i];
+                headerRow.Cells[i].Value = headers[i];
             }
 
-            // Paginate if content flows beyond page
             var layout = new PdfGridLayoutFormat
             {
                 Break = PdfLayoutBreakType.FitPage,
@@ -179,74 +193,98 @@ namespace ExamSchedulerSample.Services
             grid.Draw(page, new PointF(margin, startY), layout);
         }
 
-        // --------------------------------------------------------------------
-        // Row builders
-        // --------------------------------------------------------------------
-        private static IEnumerable<object> BuildTimetableRows(List<ExamAppointment> appts)
+        /// <summary>
+        /// Builds a flat, grid-ready set of timetable rows (date/session/course/hall/invigilator).
+        /// </summary>
+        /// <param name="appointments">The list of exam appointments.</param>
+        /// <returns>An enumerable of anonymous objects suitable for binding to a PDF grid.</returns>
+        private static IEnumerable<object> BuildTimetableRowsData(List<ExamAppointment> appointments)
         {
-            return appts
-                .OrderBy(a => a.Start)
-                .Select(a => new
+            return (appointments ?? new List<ExamAppointment>())
+                .OrderBy(appointment => appointment.Start)
+                .Select(appointment => new
                 {
-                    Date = a.Start.Date.ToString("dd-MMM-yyyy"),
-                    Session = a.Start.Hour < 13 ? "FN" : "AN",
-                    Course = a.Subject,
-                    Hall = a.HallName,
-                    Invigilator = a.InvigilatorName // ensure name prints, not ID
+                    Date = appointment.Start.Date.ToString("dd-MMM-yyyy"),
+                    Session = appointment.Start.Hour < 13 ? "FN" : "AN",
+                    Course = appointment.Subject,
+                    Hall = appointment.HallName,
+                    Invigilator = appointment.InvigilatorName
                 });
         }
 
-        private static List<InvigilatorDutyRow> BuildInvigilatorDuties(
-            List<ExamAppointment> appts,
+        /// <summary>
+        /// Builds the invigilator duty allocation rows from appointments, halls, and invigilators.
+        /// </summary>
+        /// <param name="appointments">The exam appointment list.</param>
+        /// <param name="halls">The hall list.</param>
+        /// <param name="invigilators">The invigilator list.</param>
+        /// <returns>A list of <see cref="InvigilatorDutyRow"/> items.</returns>
+        private static List<InvigilatorDutyRow> BuildInvigilatorDutyRows(
+            List<ExamAppointment> appointments,
             List<Hall> halls,
-            List<Invigilator> invs)
+            List<Invigilator> invigilators)
         {
-            var hallMap = halls.ToDictionary(h => h.Id, h => h.Name);
-            var invMap = invs.ToDictionary(t => t.Id, t => t.Name);
+            var hallById = (halls ?? new List<Hall>()).ToDictionary(hall => hall.Id, hall => hall.Name);
+            var invigilatorById = (invigilators ?? new List<Invigilator>()).ToDictionary(invigilator => invigilator.Id, invigilator => invigilator.Name);
 
             var rows = new List<InvigilatorDutyRow>();
-            foreach (var a in appts.OrderBy(a => a.Start))
+            foreach (var appointment in (appointments ?? new List<ExamAppointment>()).OrderBy(appointment => appointment.Start))
             {
                 rows.Add(new InvigilatorDutyRow
                 {
-                    Date = a.Start.Date,
-                    Session = a.Start.Hour < 13 ? ExamSession.FN : ExamSession.AN,
-                    Invigilator = invMap.TryGetValue(a.InvigilatorId, out var n) ? n : (a.InvigilatorName ?? a.InvigilatorId),
-                    Hall = hallMap.TryGetValue(a.HallId, out var hn) ? hn : (a.HallName ?? a.HallId),
-                    Course = a.Subject
+                    Date = appointment.Start.Date,
+                    Session = appointment.Start.Hour < 13 ? ExamSession.FN : ExamSession.AN,
+                    Invigilator = invigilatorById.TryGetValue(appointment.InvigilatorId, out var invName)
+                        ? invName
+                        : (appointment.InvigilatorName ?? appointment.InvigilatorId),
+                    Hall = hallById.TryGetValue(appointment.HallId, out var hallName)
+                        ? hallName
+                        : (appointment.HallName ?? appointment.HallId),
+                    Course = appointment.Subject
                 });
             }
             return rows;
         }
 
-        private static List<HallAvailabilityRow> BuildHallAvailability(List<ExamAppointment> appts, List<Hall> halls)
+        /// <summary>
+        /// Builds the hall availability rows (per date/session/hall) based on the scheduled appointments.
+        /// </summary>
+        /// <param name="appointments">The exam appointment list.</param>
+        /// <param name="halls">The hall list.</param>
+        /// <returns>A list of <see cref="HallAvailabilityRow"/> entries describing capacity and status.</returns>
+        private static List<HallAvailabilityRow> BuildHallAvailabilityRows(List<ExamAppointment> appointments, List<Hall> halls)
         {
-            // For demo: mark hall as "Allocated" if any appointment exists in FN/AN
-            var rows = new List<HallAvailabilityRow>();
-            var dates = appts.Select(a => a.Start.Date).Distinct().OrderBy(d => d);
+            var resultRows = new List<HallAvailabilityRow>();
+            var appointmentList = appointments ?? new List<ExamAppointment>();
+            var hallList = halls ?? new List<Hall>();
 
-            foreach (var d in dates)
+            var dates = appointmentList
+                .Select(a => a.Start.Date)
+                .Distinct()
+                .OrderBy(d => d);
+
+            foreach (var date in dates)
             {
-                foreach (var hall in halls)
+                foreach (var hall in hallList)
                 {
-                    foreach (var ses in new[] { ExamSession.FN, ExamSession.AN })
+                    foreach (var session in new[] { ExamSession.FN, ExamSession.AN })
                     {
-                        var slotStart = ses == ExamSession.FN ? d.AddHours(9).AddMinutes(30) : d.AddHours(14);
-                        var any = appts.Any(a => a.HallId == hall.Id && a.Start == slotStart);
+                        var slotStart = session == ExamSession.FN ? date.AddHours(9).AddMinutes(30) : date.AddHours(14);
+                        var isAllocated = appointmentList.Any(appointment => appointment.HallId == hall.Id && appointment.Start == slotStart);
 
-                        rows.Add(new HallAvailabilityRow
+                        resultRows.Add(new HallAvailabilityRow
                         {
-                            Date = d,
-                            Session = ses,
+                            Date = date,
+                            Session = session,
                             Hall = hall.Name,
                             Capacity = hall.Capacity,
-                            Status = any ? "Allocated" : "Available"
+                            Status = isAllocated ? "Allocated" : "Available"
                         });
                     }
                 }
             }
 
-            return rows;
+            return resultRows;
         }
     }
 }
