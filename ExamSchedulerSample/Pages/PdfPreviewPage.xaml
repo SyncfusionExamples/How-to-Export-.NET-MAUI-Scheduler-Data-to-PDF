@@ -12,7 +12,6 @@
             <Button Text="Close" Clicked="OnCloseClicked" />
         </HorizontalStackLayout>
 
-        <!-- Keep it simple; we only load a MemoryStream we control -->
         <pdf:SfPdfViewer x:Name="Viewer" Grid.Row="1" />
     </Grid>
 </ContentPage>

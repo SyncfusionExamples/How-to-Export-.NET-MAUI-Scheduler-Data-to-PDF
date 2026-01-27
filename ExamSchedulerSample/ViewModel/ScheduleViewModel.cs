@@ -4,10 +4,10 @@ using System.Collections.ObjectModel;
 namespace ExamSchedulerSample
 {
     /// <summary>
-    /// Represents the view model responsible for providing scheduler data
-    /// (appointments, halls, and invigilators) to the Schedule page.
-    /// It also computes the initial <see cref="DisplayDate"/> so that
-    /// the scheduler opens aligned with the first exam.
+    /// Represents the view model that provides scheduler data (appointments, halls, invigilators)
+    /// to the Schedule page. The data set is filtered by the selected <see cref="Program"/>.
+    /// It also computes the initial <see cref="DisplayDate"/> so that the scheduler opens
+    /// aligned with the first exam for the chosen program.
     /// </summary>
     public sealed class ScheduleViewModel
     {
@@ -31,23 +31,67 @@ namespace ExamSchedulerSample
         /// Defaults to the start date of the earliest appointment.
         /// If no appointments exist, defaults to today's date.
         /// </summary>
-        public DateTime DisplayDate { get; }
+        public DateTime DisplayDate { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScheduleViewModel"/> class,
-        /// loading sample halls, invigilators, and appointments from the
-        /// <see cref="SampleDataService"/>. The <see cref="DisplayDate"/> is set
-        /// automatically based on the earliest appointment.
+        /// Gets the currently-selected academic program (UG, PG, MBA).
+        /// </summary>
+        public ProgramType Program { get; private set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScheduleViewModel"/> class
+        /// with the default program (<see cref="ProgramType.UG"/>).
         /// </summary>
         public ScheduleViewModel()
+            : this(ProgramType.UG)
         {
-            foreach (var hall in SampleDataService.GetHalls())
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScheduleViewModel"/> class
+        /// and loads halls, invigilators, and program-filtered appointments.
+        /// </summary>
+        /// <param name="program">The program to load (UG, PG, MBA).</param>
+        public ScheduleViewModel(ProgramType program)
+        {
+            Program = program;
+            LoadStaticData();
+            LoadProgramData(program);
+        }
+
+        /// <summary>
+        /// Reloads the scheduler data for the specified <paramref name="program"/>,
+        /// replacing the appointment set and updating <see cref="DisplayDate"/>.
+        /// </summary>
+        /// <param name="program">The new program to display (UG, PG, MBA).</param>
+        public void LoadData(ProgramType program)
+        {
+            Program = program;
+            LoadProgramData(program);
+        }
+
+        /// <summary>
+        /// Loads static resources (Halls, Invigilators). Called once from the constructor.
+        /// </summary>
+        private void LoadStaticData()
+        {
+            Halls.Clear();
+            foreach (var hall in SampleDataPage.GetHalls())
                 Halls.Add(hall);
 
-            foreach (var invigilator in SampleDataService.GetInvigilators())
+            Invigilators.Clear();
+            foreach (var invigilator in SampleDataPage.GetInvigilators())
                 Invigilators.Add(invigilator);
+        }
 
-            foreach (var appointment in SampleDataService.GetExamAppointments())
+        /// <summary>
+        /// Loads appointments for the selected program and computes the display date.
+        /// </summary>
+        /// <param name="program">The program to load (UG, PG, MBA).</param>
+        private void LoadProgramData(ProgramType program)
+        {
+            Appointments.Clear();
+            foreach (var appointment in SampleDataPage.GetExamAppointments(program))
                 Appointments.Add(appointment);
 
             DisplayDate =

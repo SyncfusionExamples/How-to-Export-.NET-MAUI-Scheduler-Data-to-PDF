@@ -1,7 +1,4 @@
-﻿using Microsoft.Maui.Graphics;
-using System;
-using System.Collections.ObjectModel;
-using System.Xml;
+﻿using System.Collections.ObjectModel;
 
 namespace ExamSchedulerSample
 {

@@ -3,23 +3,98 @@
     x:Class="ExamSchedulerSample.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#F5F7FB"
-    Padding="24">
+    BackgroundColor="#F2F4F7">
 
-    <VerticalStackLayout
-        Padding="40"
-        Spacing="20"
-        VerticalOptions="Center">
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="32">
+            
+            <Frame HasShadow="True"
+                   CornerRadius="20"
+                   Padding="24"
+                   BackgroundColor="#4B6EF6">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Exam Time Table"
+                           TextColor="White"
+                           FontSize="32"
+                           FontAttributes="Bold" />
 
-        <Label Text="Exam Scheduler"
-               FontSize="32"
-               HorizontalOptions="Center"
-               FontAttributes="Bold" />
+                    <Label Text="Select your program to view the exam timetable"
+                           TextColor="#E8EAFE"
+                           FontSize="14" />
+                </VerticalStackLayout>
+            </Frame>
 
-        <Button Text="Enter"
-                x:Name="EnterButton"
-                HeightRequest="50"
-                Clicked="EnterButton_Clicked" />
-    </VerticalStackLayout>
+            <VerticalStackLayout Spacing="20">
+                <Frame Padding="16"
+                       CornerRadius="16"
+                       HasShadow="True"
+                       BackgroundColor="White">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Engineering - UG"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="#333" />
 
+                        <Label Text="View the semester exams for Undergraduate Engineering."
+                               FontSize="13"
+                               TextColor="#777" />
+
+                        <Button Text="Open UG Schedule"
+                                BackgroundColor="#4B6EF6"
+                                TextColor="White"
+                                CornerRadius="12"
+                                HeightRequest="48"
+                                Clicked="OpenUg_Clicked"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Frame Padding="16"
+                       CornerRadius="16"
+                       HasShadow="True"
+                       BackgroundColor="White">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Engineering - PG"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="#333" />
+
+                        <Label Text="View the postgraduate engineering exam schedules."
+                               FontSize="13"
+                               TextColor="#777" />
+
+                        <Button Text="Open PG Schedule"
+                                BackgroundColor="#7A57D1"
+                                TextColor="White"
+                                CornerRadius="12"
+                                HeightRequest="48"
+                                Clicked="OpenPg_Clicked"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Frame Padding="16"
+                       CornerRadius="16"
+                       HasShadow="True"
+                       BackgroundColor="White">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="MBA Program"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="#333" />
+
+                        <Label Text="View the MBA exam schedule and details."
+                               FontSize="13"
+                               TextColor="#777" />
+
+                        <Button Text="Open MBA Schedule"
+                                BackgroundColor="#E66141"
+                                TextColor="White"
+                                CornerRadius="12"
+                                HeightRequest="48"
+                                Clicked="OpenMba_Clicked"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

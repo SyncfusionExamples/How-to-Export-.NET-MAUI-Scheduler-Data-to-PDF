@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls;
 using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
 using Syncfusion.Pdf.Grid;
+using ExamSchedulerSample; // for ProgramType, ExamAppointment, etc.
 
 using PointF = Syncfusion.Drawing.PointF;
 using RectangleF = Syncfusion.Drawing.RectangleF;
@@ -17,42 +18,73 @@ namespace ExamSchedulerSample.Services
     /// <summary>
     /// Provides PDF export and preview services for exam schedule data,
     /// including timetable, invigilator duties, and hall availability.
+    /// Supports program-specific (UG/PG/MBA) exports.
     /// </summary>
     public static class PdfExportService
     {
         /// <summary>
-        /// Builds the exam schedule PDF and invokes the platform save/view service.
+        /// Builds the exam schedule PDF for the default program (UG)
+        /// and invokes the platform save/view service.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task ExportAllAsync()
+        public static Task ExportAllAsync() => ExportAllAsync(ProgramType.UG);
+
+        /// <summary>
+        /// Builds the exam schedule PDF for the specified program and
+        /// invokes the platform save/view service.
+        /// </summary>
+        /// <param name="program">The program to export (UG/PG/MBA).</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task ExportAllAsync(ProgramType program)
         {
-            var pdfBytes = CreatePdfBytes();
+            var pdfBytes = CreatePdfBytes(program);
             using var stream = new MemoryStream(pdfBytes);
             stream.Position = 0;
-            await SaveService.SaveAndViewAsync("ExamSchedule.pdf", "application/pdf", stream);
+            var fileName = $"ExamSchedule-{program}.pdf";
+            await SaveService.SaveAndViewAsync(fileName, "application/pdf", stream);
         }
 
         /// <summary>
-        /// Builds the exam schedule PDF and navigates to a preview page that can handle printing/sharing.
+        /// Builds the exam schedule PDF for the default program (UG) and navigates
+        /// to a preview page that can handle printing/sharing.
         /// </summary>
         /// <param name="navigation">The MAUI navigation instance used to push the preview page.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task PreviewAndPrintAsync(INavigation navigation)
+        public static Task PreviewAndPrintAsync(INavigation navigation) =>
+            PreviewAndPrintAsync(navigation, ProgramType.UG);
+
+        /// <summary>
+        /// Builds the exam schedule PDF for the specified program and navigates
+        /// to a preview page that can handle printing/sharing.
+        /// </summary>
+        /// <param name="navigation">The MAUI navigation instance used to push the preview page.</param>
+        /// <param name="program">The program to export/preview (UG/PG/MBA).</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task PreviewAndPrintAsync(INavigation navigation, ProgramType program)
         {
-            var pdfBytes = CreatePdfBytes();
+            var pdfBytes = CreatePdfBytes(program);
             await navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes)));
         }
 
         /// <summary>
         /// Creates the PDF document bytes for the complete exam export,
         /// including a cover and three sections: timetable, duties, and hall availability.
+        /// Defaults to UG.
         /// </summary>
         /// <returns>The PDF document as a byte array.</returns>
-        private static byte[] CreatePdfBytes()
+        private static byte[] CreatePdfBytes() => CreatePdfBytes(ProgramType.UG);
+
+        /// <summary>
+        /// Creates the PDF document bytes for the complete exam export for the specified program,
+        /// including a cover and three sections: timetable, duties, and hall availability.
+        /// </summary>
+        /// <param name="program">The program to export (UG/PG/MBA).</param>
+        /// <returns>The PDF document as a byte array.</returns>
+        private static byte[] CreatePdfBytes(ProgramType program)
         {
-            var halls = SampleDataService.GetHalls();
-            var invigilators = SampleDataService.GetInvigilators();
-            var appointments = SampleDataService.GetExamAppointments();
+            var halls = SampleDataPage.GetHalls();
+            var invigilators = SampleDataPage.GetInvigilators();
+            var appointments = SampleDataPage.GetExamAppointments(program);
 
             var invigilatorDutyRows = BuildInvigilatorDutyRows(appointments, halls, invigilators);
             var hallAvailabilityRows = BuildHallAvailabilityRows(appointments, halls);
@@ -65,7 +97,7 @@ namespace ExamSchedulerSample.Services
 
             // Cover
             var coverPage = document.Pages.Add();
-            DrawCover(coverPage.Graphics);
+            DrawCover(coverPage.Graphics, $"University Exam Schedule — {program}");
 
             // Section 1: Timetable
             var timetablePage = document.Pages.Add();
@@ -104,6 +136,15 @@ namespace ExamSchedulerSample.Services
         /// </summary>
         /// <param name="graphics">The graphics context of the current PDF page.</param>
         private static void DrawCover(PdfGraphics graphics)
+            => DrawCover(graphics, "University Exam Schedule");
+
+        /// <summary>
+        /// Draws the cover page with a banner, a custom title (e.g., with program),
+        /// generation timestamp, and a simple contents list.
+        /// </summary>
+        /// <param name="graphics">The graphics context of the current PDF page.</param>
+        /// <param name="title">Custom title text to render on the cover.</param>
+        private static void DrawCover(PdfGraphics graphics, string title)
         {
             const float margin = 48f;
             SizeF clientSize = graphics.ClientSize;
@@ -119,7 +160,7 @@ namespace ExamSchedulerSample.Services
 
             var titleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 22, PdfFontStyle.Bold);
             var subtitleFont = new PdfStandardFont(PdfFontFamily.Helvetica, 12);
-            graphics.DrawString("University Exam Schedule", titleFont, PdfBrushes.DarkBlue, new PointF(left + 14, top + 24));
+            graphics.DrawString(title, titleFont, PdfBrushes.DarkBlue, new PointF(left + 14, top + 24));
             graphics.DrawString($"Generated: {DateTime.Now:dd-MMM-yyyy HH:mm}", subtitleFont, PdfBrushes.Gray, new PointF(left + 14, top + 56));
 
             float y = top + bannerHeight + 28f;

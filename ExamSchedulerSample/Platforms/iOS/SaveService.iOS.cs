@@ -50,8 +50,6 @@ namespace ExamSchedulerSample
                 .First()
                 .RootViewController;
 
-            // Note: For advanced scenarios, set controller.Delegate to return the appropriate
-            // view controller for preview. The default call below works in most basic cases.
             controller.PresentPreview(true);
         }
     }

@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:ExamSchedulerSample"
              xmlns:syncTheme="clr-namespace:Syncfusion.Maui.Themes;assembly=Syncfusion.Maui.Core"
-             xmlns:syncToolkitTheme="clr-namespace:Syncfusion.Maui.Toolkit.Themes;assembly=Syncfusion.Maui.Toolkit"
              x:Class="ExamSchedulerSample.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -12,7 +11,6 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
                 <ResourceDictionary Source="Resources/Styles/AppStyles.xaml" />
                 <syncTheme:SyncfusionThemeResourceDictionary VisualTheme="MaterialLight" />
-                <syncToolkitTheme:SyncfusionThemeResourceDictionary VisualTheme="MaterialLight" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
