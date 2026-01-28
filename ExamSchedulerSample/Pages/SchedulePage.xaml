@@ -8,10 +8,6 @@
     x:Class="ExamSchedulerSample.SchedulePage"
     Title="Exam Schedule">
 
-    <ContentPage.BindingContext>
-        <local:ScheduleViewModel />
-    </ContentPage.BindingContext>
-    
     <Grid RowDefinitions="Auto,*" Padding="10">
 
         <HorizontalStackLayout Spacing="8">

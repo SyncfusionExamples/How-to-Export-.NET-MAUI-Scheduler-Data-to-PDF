@@ -1,4 +1,9 @@
-﻿namespace ExamSchedulerSample
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Maui.Graphics;
+
+namespace ExamSchedulerSample
 {
     /// <summary>
     /// Identifies the academic program for which exam data is generated.
@@ -14,10 +19,12 @@
     /// Provides deterministic data (halls, invigilators, courses) and utility methods
     /// for building complete exam schedules used by the app. Includes program-aware
     /// scheduling for UG, PG, and MBA with constraints:
-    /// - No Sunday exams,
-    /// - Engineering (UG/PG): adjacent semester pairs per department (Option A),
-    /// - MBA: fixed pairs (1,3) then (2,4) on alternating workdays,
-    /// - 4 slots/day (FN×2, AN×2), hall rotation, and minimal invigilator repeats per day.
+    /// <list type="bullet">
+    /// <item><description>No Sunday exams.</description></item>
+    /// <item><description>Engineering (UG/PG): adjacent semester pairs per department (Option A).</description></item>
+    /// <item><description>MBA: fixed pairs (1,3) then (2,4) on alternating workdays.</description></item>
+    /// <item><description>4 slots/day (FN×2, AN×2), hall rotation, and minimal invigilator repeats per workday.</description></item>
+    /// </list>
     /// </summary>
     public static class SampleDataPage
     {
@@ -163,10 +170,10 @@
         /// <summary>
         /// Formats a time range as <c>HH:mm–HH:mm</c>.
         /// </summary>
-        /// <param name="s">Start time.</param>
-        /// <param name="e">End time.</param>
+        /// <param name="start">Start time.</param>
+        /// <param name="end">End time.</param>
         /// <returns>A human-readable slot label.</returns>
-        private static string FormatSlot(DateTime s, DateTime e) => $"{s:HH\\:mm}–{e:HH\\:mm}";
+        private static string FormatSlot(DateTime start, DateTime end) => $"{start:HH\\:mm}–{end:HH\\:mm}";
 
         /// <summary>
         /// Builds a complete list of exam appointments for the <b>UG</b> program (default).
@@ -194,123 +201,130 @@
             var courses = GetCourses(program);
 
             // Build department -> semester -> queue of courses
-            var departments = courses.Select(c => c.Department).Distinct().OrderBy(d => d).ToArray();
-            var deptSemQueues = new Dictionary<string, Dictionary<int, Queue<Course>>>(StringComparer.Ordinal);
-            foreach (var dept in departments)
+            var departments = courses
+                .Select(course => course.Department)
+                .Distinct()
+                .OrderBy(department => department)
+                .ToArray();
+
+            var departmentSemesterQueues = new Dictionary<string, Dictionary<int, Queue<Course>>>(StringComparer.Ordinal);
+            foreach (var department in departments)
             {
-                var semMap = new Dictionary<int, Queue<Course>>();
-                foreach (var grp in courses.Where(c => c.Department == dept).GroupBy(c => c.Semester).OrderBy(g => g.Key))
+                var semesterQueueMap = new Dictionary<int, Queue<Course>>();
+                var departmentCourses = courses.Where(course => course.Department == department);
+                foreach (var semesterGroup in departmentCourses.GroupBy(course => course.Semester).OrderBy(group => group.Key))
                 {
-                    semMap[grp.Key] = new Queue<Course>(grp);
+                    semesterQueueMap[semesterGroup.Key] = new Queue<Course>(semesterGroup);
                 }
-                deptSemQueues[dept] = semMap;
+                departmentSemesterQueues[department] = semesterQueueMap;
             }
 
-            // Build semester pair sequence per department according to rules
-            var pairSeqPerDept = new Dictionary<string, List<(int s1, int s2)>>(StringComparer.Ordinal);
-            foreach (var dept in departments)
+            var semesterPairSequenceByDepartment = new Dictionary<string, List<(int s1, int s2)>>(StringComparer.Ordinal);
+            foreach (var department in departments)
             {
-                var sems = deptSemQueues[dept].Keys.OrderBy(s => s).ToList();
-                pairSeqPerDept[dept] = BuildSemesterPairs(program, sems);
+                var orderedSemesters = departmentSemesterQueues[department].Keys.OrderBy(sem => sem).ToList();
+                semesterPairSequenceByDepartment[department] = BuildSemesterPairs(program, orderedSemesters);
             }
 
             var appointments = new List<ExamAppointment>();
             var baseDay = DateTime.Today.AddDays(3).Date;
 
-            int invIndexGlobal = 0;                 // rotate globally across days
-            var deptStartIndex = 0;                  // rotate department start per slot
-            int workDayIndex = 0;                    // counts non-Sunday days only
+            int invigilatorGlobalIndex = 0;
+            var departmentStartIndex = 0;
+            int workdayIndex = 0;
 
             var day = baseDay;
-            while (HasAnyCoursesLeft(deptSemQueues))
+            while (HasAnyCoursesLeft(departmentSemesterQueues))
             {
-                // Skip Sundays without advancing the semester pair pattern
                 if (day.DayOfWeek == DayOfWeek.Sunday)
                 {
                     day = day.AddDays(1);
                     continue;
                 }
 
-                // Determine today's semester pair for each department
-                var todayPairs = new Dictionary<string, (int s1, int s2)>(StringComparer.Ordinal);
-                foreach (var dept in departments)
+                var todaySemesterPairsByDepartment = new Dictionary<string, (int s1, int s2)>(StringComparer.Ordinal);
+                foreach (var department in departments)
                 {
-                    var seq = pairSeqPerDept[dept];
-                    if (seq.Count == 0)
+                    var semesterPairSequence = semesterPairSequenceByDepartment[department];
+                    if (semesterPairSequence.Count == 0)
                     {
-                        todayPairs[dept] = (int.MinValue, int.MinValue);
+                        todaySemesterPairsByDepartment[department] = (int.MinValue, int.MinValue);
                         continue;
                     }
-                    var pair = seq[workDayIndex % seq.Count];
-                    todayPairs[dept] = pair;
+
+                    var semesterPair = semesterPairSequence[workdayIndex % semesterPairSequence.Count];
+                    todaySemesterPairsByDepartment[department] = semesterPair;
                 }
 
-                // Rotate halls per day: FN => [0,1], AN => [2,3]
-                int dayIndex = workDayIndex; // tie hall rotation to workdays
-                var hallsRotated = halls
-                    .Skip(dayIndex % halls.Count)
-                    .Concat(halls.Take(dayIndex % halls.Count))
+                int hallRotationIndex = workdayIndex;
+                var rotatedHalls = halls
+                    .Skip(hallRotationIndex % halls.Count)
+                    .Concat(halls.Take(hallRotationIndex % halls.Count))
                     .ToList();
 
                 var dayPlan = new (ExamSession session, Hall hall)[]
                 {
-                    (ExamSession.FN, hallsRotated[0]),
-                    (ExamSession.FN, hallsRotated[1]),
-                    (ExamSession.AN, hallsRotated[2]),
-                    (ExamSession.AN, hallsRotated[3])
+                    (ExamSession.FN, rotatedHalls[0]),
+                    (ExamSession.FN, rotatedHalls[1]),
+                    (ExamSession.AN, rotatedHalls[2]),
+                    (ExamSession.AN, rotatedHalls[3])
                 };
 
-                var usedInvigilatorsToday = new HashSet<string>(StringComparer.Ordinal);
+                var usedInvigilatorIdsToday = new HashSet<string>(StringComparer.Ordinal);
 
-                // Try to fill today's 4 slots
                 foreach (var slot in dayPlan)
                 {
-                    if (!HasAnyCoursesLeft(deptSemQueues))
+                    if (!HasAnyCoursesLeft(departmentSemesterQueues))
                         break;
 
                     // Find next department (round-robin) that still has any course in today's allowed semesters
-                    if (!TryPickDeptWithTodaySemCourses(departments, deptSemQueues, todayPairs, deptStartIndex, out var chosenDept))
+                    if (!TryPickDeptWithTodaySemCourses(
+                            departments,
+                            departmentSemesterQueues,
+                            todaySemesterPairsByDepartment,
+                            departmentStartIndex,
+                            out var chosenDepartment))
                     {
                         // No department can supply a course for today's pairs; stop filling further slots
                         break;
                     }
 
-                    var (s1, s2) = todayPairs[chosenDept];
+                    var (semester1, semester2) = todaySemesterPairsByDepartment[chosenDepartment];
 
                     // Pick a course from allowed semesters (prefer lower semester first)
-                    if (!TryDequeueCourse(deptSemQueues[chosenDept], s1, s2, out var course))
+                    if (!TryDequeueCourse(departmentSemesterQueues[chosenDepartment], semester1, semester2, out var courseToSchedule))
                     {
-                        // Shouldn't happen due to the check above, but guard anyway.
-                        deptStartIndex = (Array.IndexOf(departments, chosenDept) + 1) % departments.Length;
+                        // Guard: if not available, rotate department start and continue
+                        departmentStartIndex = (Array.IndexOf(departments, chosenDepartment) + 1) % departments.Length;
                         continue;
                     }
 
-                    // Choose invigilator (avoid repeating within the same day if possible)
-                    Invigilator inv = null!;
-                    int tries = 0;
-                    while (tries < invigilators.Count)
+                    // Choose invigilator (avoid repeating within the same day if possible).
+                    Invigilator selectedInvigilator = null!;
+                    int invigilatorSelectionAttempts = 0;
+                    while (invigilatorSelectionAttempts < invigilators.Count)
                     {
-                        inv = invigilators[invIndexGlobal % invigilators.Count];
-                        invIndexGlobal++;
-                        if (!usedInvigilatorsToday.Contains(inv.Id))
+                        selectedInvigilator = invigilators[invigilatorGlobalIndex % invigilators.Count];
+                        invigilatorGlobalIndex++;
+                        if (!usedInvigilatorIdsToday.Contains(selectedInvigilator.Id))
                             break;
-                        tries++;
+                        invigilatorSelectionAttempts++;
                     }
-                    usedInvigilatorsToday.Add(inv.Id);
+                    usedInvigilatorIdsToday.Add(selectedInvigilator.Id);
 
                     var (start, end) = Slot(day, slot.session);
-                    var notes = $"{FormatSlot(start, end)}  •  Room: {slot.hall.Name}  •  Invigilator: {inv.Name}";
+                    var notes = $"{FormatSlot(start, end)}  •  Room: {slot.hall.Name}  •  Invigilator: {selectedInvigilator.Name}";
 
                     var appointment = new ExamAppointment
                     {
                         Start = start,
                         End = end,
-                        Subject = $"{course.Code} – {course.Title}",
+                        Subject = $"{courseToSchedule.Code} – {courseToSchedule.Title}",
                         Notes = notes,
                         HallId = slot.hall.Id,
                         HallName = slot.hall.Name,
-                        InvigilatorId = inv.Id,
-                        InvigilatorName = inv.Name,
+                        InvigilatorId = selectedInvigilator.Id,
+                        InvigilatorName = selectedInvigilator.Name,
                         Background = slot.hall.Color
                     };
 
@@ -318,12 +332,12 @@
                     appointments.Add(appointment);
 
                     // Rotate department start for next slot
-                    deptStartIndex = (Array.IndexOf(departments, chosenDept) + 1) % departments.Length;
+                    departmentStartIndex = (Array.IndexOf(departments, chosenDepartment) + 1) % departments.Length;
                 }
 
                 // Advance to next day (workday index only)
                 day = day.AddDays(1);
-                workDayIndex++;
+                workdayIndex++;
             }
 
             return appointments;
@@ -331,115 +345,149 @@
 
         /// <summary>
         /// Builds the semester pair sequence according to program rules.
-        /// UG/PG → adjacent pairs; if exactly 3 semesters, use a fair cycle (1,2)->(3,1)->(2,3).
-        /// MBA → fixed (1,3)->(2,4) pairs.
+        /// UG/PG → adjacent pairs; if exactly 3 semesters, uses a fair cycle (1,2) → (3,1) → (2,3).
+        /// MBA → fixed pairs (1,3) then (2,4).
         /// </summary>
-        private static List<(int s1, int s2)> BuildSemesterPairs(ProgramType program, List<int> semestersAsc)
+        /// <param name="program">The program type (UG, PG, MBA).</param>
+        /// <param name="semestersAscending">A sorted list of available semesters for a department.</param>
+        /// <returns>A sequence of semester pairs in the order they should be used across workdays.</returns>
+        private static List<(int s1, int s2)> BuildSemesterPairs(ProgramType program, List<int> semestersAscending)
         {
-            var result = new List<(int, int)>();
+            var pairSequence = new List<(int, int)>();
+
             if (program == ProgramType.MBA)
             {
-                result.Add((1, 3));
-                result.Add((2, 4));
-                return result;
+                pairSequence.Add((1, 3));
+                pairSequence.Add((2, 4));
+                return pairSequence;
             }
 
             // Engineering (UG/PG) – Option A: adjacent pairs
-            if (semestersAsc.Count == 0)
-                return result;
+            if (semestersAscending.Count == 0)
+                return pairSequence;
 
-            if (semestersAsc.Count == 1)
+            if (semestersAscending.Count == 1)
             {
                 // Only one semester present; pair it with itself
-                result.Add((semestersAsc[0], semestersAsc[0]));
-                return result;
+                var onlySemester = semestersAscending[0];
+                pairSequence.Add((onlySemester, onlySemester));
+                return pairSequence;
             }
 
-            if (semestersAsc.Count == 3)
+            if (semestersAscending.Count == 3)
             {
                 // Fair 2-per-day cycle for three semesters
-                var a = semestersAsc[0];
-                var b = semestersAsc[1];
-                var c = semestersAsc[2];
-                result.Add((a, b));
-                result.Add((c, a));
-                result.Add((b, c));
-                return result;
+                var semesterFirst = semestersAscending[0];
+                var semesterSecond = semestersAscending[1];
+                var semesterThird = semestersAscending[2];
+
+                pairSequence.Add((semesterFirst, semesterSecond));
+                pairSequence.Add((semesterThird, semesterFirst));
+                pairSequence.Add((semesterSecond, semesterThird));
+                return pairSequence;
             }
 
-            // Even or >=4: pair adjacent (1,2), (3,4), (5,6)...
-            for (int i = 0; i < semestersAsc.Count; i += 2)
+            // Even or >=4: pair adjacent (1,2), (3,4), (5,6), ...
+            for (int index = 0; index < semestersAscending.Count; index += 2)
             {
-                var s1 = semestersAsc[i];
-                var s2 = (i + 1 < semestersAsc.Count) ? semestersAsc[i + 1] : semestersAsc[i]; // guard odd
-                result.Add((s1, s2));
+                var semester1 = semestersAscending[index];
+                var semester2 = (index + 1 < semestersAscending.Count)
+                    ? semestersAscending[index + 1]
+                    : semestersAscending[index]; // guard odd
+                pairSequence.Add((semester1, semester2));
             }
-            return result;
+
+            return pairSequence;
         }
 
         /// <summary>
-        /// Checks whether any department/semester queue still has courses left.
+        /// Checks whether any department/semester queue still has courses left to schedule.
         /// </summary>
-        private static bool HasAnyCoursesLeft(Dictionary<string, Dictionary<int, Queue<Course>>> deptSemQueues)
+        /// <param name="departmentSemesterQueues">Map of department to semester queues.</param>
+        /// <returns><c>true</c> if any queue has courses; otherwise <c>false</c>.</returns>
+        private static bool HasAnyCoursesLeft(Dictionary<string, Dictionary<int, Queue<Course>>> departmentSemesterQueues)
         {
-            foreach (var semMap in deptSemQueues.Values)
+            foreach (var semesterQueueMap in departmentSemesterQueues.Values)
             {
-                foreach (var q in semMap.Values)
-                    if (q.Count > 0) return true;
+                foreach (var courseQueue in semesterQueueMap.Values)
+                {
+                    if (courseQueue.Count > 0)
+                        return true;
+                }
             }
             return false;
         }
 
         /// <summary>
-        /// Finds the next department (round-robin) that has at least one course in today's allowed semesters.
+        /// Finds the next department (round-robin) that has at least one course
+        /// in today's allowed semester pair.
         /// </summary>
+        /// <param name="departments">Ordered list of departments.</param>
+        /// <param name="departmentSemesterQueues">Department to semester queues map.</param>
+        /// <param name="todaySemesterPairsByDepartment">Today's allowed semester pairs per department.</param>
+        /// <param name="startIndex">Round-robin starting index.</param>
+        /// <param name="chosenDepartment">The department selected, if any.</param>
+        /// <returns><c>true</c> if a department with available courses is found; otherwise <c>false</c>.</returns>
         private static bool TryPickDeptWithTodaySemCourses(
             string[] departments,
-            Dictionary<string, Dictionary<int, Queue<Course>>> deptSemQueues,
-            Dictionary<string, (int s1, int s2)> todayPairs,
+            Dictionary<string, Dictionary<int, Queue<Course>>> departmentSemesterQueues,
+            Dictionary<string, (int s1, int s2)> todaySemesterPairsByDepartment,
             int startIndex,
-            out string chosenDept)
+            out string chosenDepartment)
         {
-            for (int i = 0; i < departments.Length; i++)
+            for (int offset = 0; offset < departments.Length; offset++)
             {
-                var dept = departments[(startIndex + i) % departments.Length];
-                if (!todayPairs.TryGetValue(dept, out var pair))
+                var department = departments[(startIndex + offset) % departments.Length];
+
+                if (!todaySemesterPairsByDepartment.TryGetValue(department, out var allowedPair))
                     continue;
 
-                if (HasCourseInSemesters(deptSemQueues[dept], pair.s1, pair.s2))
+                if (HasCourseInSemesters(departmentSemesterQueues[department], allowedPair.s1, allowedPair.s2))
                 {
-                    chosenDept = dept;
+                    chosenDepartment = department;
                     return true;
                 }
             }
-            chosenDept = "";
+
+            chosenDepartment = "";
             return false;
         }
 
         /// <summary>
-        /// Checks if the semester map has any course in either s1 or s2.
+        /// Checks if the given semester queue map has any course in either of the two semesters.
         /// </summary>
-        private static bool HasCourseInSemesters(Dictionary<int, Queue<Course>> semMap, int s1, int s2)
+        /// <param name="semesterQueueMap">Map of semester number to course queue.</param>
+        /// <param name="semester1">First allowed semester.</param>
+        /// <param name="semester2">Second allowed semester.</param>
+        /// <returns><c>true</c> if any queue has at least one course; otherwise <c>false</c>.</returns>
+        private static bool HasCourseInSemesters(Dictionary<int, Queue<Course>> semesterQueueMap, int semester1, int semester2)
         {
-            return (semMap.TryGetValue(s1, out var q1) && q1.Count > 0)
-                || (semMap.TryGetValue(s2, out var q2) && q2.Count > 0);
+            return (semesterQueueMap.TryGetValue(semester1, out var queueForSemester1) && queueForSemester1.Count > 0)
+                || (semesterQueueMap.TryGetValue(semester2, out var queueForSemester2) && queueForSemester2.Count > 0);
         }
 
         /// <summary>
-        /// Tries to dequeue one course from s1 first, then s2.
+        /// Tries to dequeue one course from the first allowed semester; if not found, tries the second.
         /// </summary>
-        private static bool TryDequeueCourse(Dictionary<int, Queue<Course>> semMap, int s1, int s2, out Course course)
+        /// <param name="semesterQueueMap">Map of semester number to course queue.</param>
+        /// <param name="semester1">First allowed semester.</param>
+        /// <param name="semester2">Second allowed semester.</param>
+        /// <param name="course">The dequeued course, if any.</param>
+        /// <returns><c>true</c> if a course is dequeued; otherwise <c>false</c>.</returns>
+        private static bool TryDequeueCourse(Dictionary<int, Queue<Course>> semesterQueueMap, int semester1, int semester2, out Course course)
         {
-            if (semMap.TryGetValue(s1, out var q1) && q1.Count > 0)
+            if (semesterQueueMap.TryGetValue(semester1, out var queueForSemester1) && queueForSemester1.Count > 0)
             {
-                course = q1.Dequeue();
+                course = queueForSemester1.Dequeue();
                 return true;
             }
-            if (semMap.TryGetValue(s2, out var q2) && q2.Count > 0)
+
+            if (semesterQueueMap.TryGetValue(semester2, out var queueForSemester2) && queueForSemester2.Count > 0)
             {
-                course = q2.Dequeue();
+                course = queueForSemester2.Dequeue();
                 return true;
             }
+
             course = null!;
             return false;
         }

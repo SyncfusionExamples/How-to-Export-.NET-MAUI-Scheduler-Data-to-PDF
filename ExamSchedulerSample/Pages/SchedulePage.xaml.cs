@@ -5,29 +5,23 @@ using ExamSchedulerSample.Services;
 namespace ExamSchedulerSample
 {
     /// <summary>
-    /// Displays the program-specific exam schedule (UG/PG/MBA), and provides actions
-    /// to export the schedule as PDF or preview/print it. The page can be constructed
-    /// with a specific <see cref="ProgramType"/> or defaults to UG when unspecified.
+    /// Displays the program-specific exam schedule (UG/PG/MBA), and provides actions to export the schedule as PDF or preview/print it.
     /// </summary>
     public partial class SchedulePage : ContentPage
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SchedulePage"/> class
-        /// with the default program (<see cref="ProgramType.UG"/>).
+        /// Initializes a new instance of the <see cref="SchedulePage"/> class with the default program (<see cref="ProgramType.UG"/>).
         /// </summary>
-        public SchedulePage()
-            : this(ProgramType.UG)
+        public SchedulePage() : this(ProgramType.UG)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SchedulePage"/> class
-        /// using a string-based program identifier (e.g., "UG", "PG", "MBA").
+        /// Initializes a new instance of the <see cref="SchedulePage"/> class using a string-based program identifier (e.g., "UG", "PG", "MBA").
         /// Falls back to <see cref="ProgramType.UG"/> if parsing fails.
         /// </summary>
         /// <param name="program">The program name (case-insensitive): "UG", "PG", or "MBA".</param>
-        public SchedulePage(string program)
-            : this(ParseProgram(program))
+        public SchedulePage(string program) : this(ParseProgram(program))
         {
         }
 
@@ -40,17 +34,14 @@ namespace ExamSchedulerSample
         {
             InitializeComponent();
 
-            // Bind a program-aware view model.
             var vm = new ScheduleViewModel(program);
             BindingContext = vm;
 
-            // Set page title to reflect the selected program.
             Title = $"Exam Schedule - {vm.Program}";
         }
 
         /// <summary>
-        /// Handles the Export PDF button click and generates a program-specific PDF
-        /// for the currently bound schedule.
+        /// Handles the Export PDF button click and generates a program-specific PDF for the currently bound schedule.
         /// </summary>
         private async void OnExportPdfClicked(object sender, EventArgs e)
         {
@@ -69,8 +60,7 @@ namespace ExamSchedulerSample
         }
 
         /// <summary>
-        /// Handles the Preview/Print button click and opens a preview
-        /// for the current program’s schedule.
+        /// Handles the Preview/Print button click and opens a preview for the current program’s schedule.
         /// </summary>
         private async void OnPreviewPrintClicked(object sender, EventArgs e)
         {
@@ -89,8 +79,7 @@ namespace ExamSchedulerSample
         }
 
         /// <summary>
-        /// Parses a string (e.g., "UG", "PG", "MBA") into a <see cref="ProgramType"/>.
-        /// Defaults to <see cref="ProgramType.UG"/> if parsing fails.
+        /// Parses a string (e.g., "UG", "PG", "MBA") into a <see cref="ProgramType"/>. Defaults to <see cref="ProgramType.UG"/> if parsing fails.
         /// </summary>
         private static ProgramType ParseProgram(string? value)
             => Enum.TryParse<ProgramType>(value, true, out var parsed) ? parsed : ProgramType.UG;

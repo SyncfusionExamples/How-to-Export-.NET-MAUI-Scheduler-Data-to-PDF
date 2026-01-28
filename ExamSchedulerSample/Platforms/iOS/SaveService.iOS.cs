@@ -4,53 +4,79 @@ using System.Linq;
 using System.Threading.Tasks;
 using Foundation;
 using UIKit;
+using CoreGraphics;
 
 namespace ExamSchedulerSample
 {
     /// <summary>
-    /// iOS-specific implementation of <see cref="SaveService"/> that saves a file
-    /// into the app's documents directory and previews it using
-    /// <see cref="UIDocumentInteractionController"/>.
+    /// iOS-specific implementation of SaveService that saves a file
+    /// to the app's cache directory and previews it via UIDocumentInteractionController.
     /// </summary>
-    /// <remarks>
-    /// The preview is presented with <c>PresentPreview(true)</c>, which will use the best available
-    /// preview controller on iOS. If the user has no compatible viewer, the system may prompt for
-    /// other options depending on installed apps.
-    /// </remarks>
     public static partial class SaveService
     {
-        /// <summary>
-        /// Saves the provided <paramref name="stream"/> as a file with the given
-        /// <paramref name="filename"/> and <paramref name="contentType"/>, and then
-        /// displays a preview using the iOS document interaction controller.
-        /// </summary>
-        /// <param name="filename">The output filename (e.g., <c>ExamSchedule.pdf</c>).</param>
-        /// <param name="contentType">The MIME type of the file (e.g., <c>application/pdf</c>).</param>
-        /// <param name="stream">The in-memory content to be written and previewed.</param>
-        /// <returns>A task representing the asynchronous save and preview operation.</returns>
+        // Keep a strong reference so it isn't GC'd during preview.
+        static UIDocumentInteractionController? _docController;
+
         public static async partial Task SaveAndViewAsync(string filename, string contentType, MemoryStream stream)
         {
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), filename);
+            // 1) Persist to a safe, app-accessible location
+            var folder = FileSystem.CacheDirectory; // or FileSystem.AppDataDirectory
+            var path = Path.Combine(folder, filename);
 
-            using (var fs = File.Create(path))
-            {
-                stream.Position = 0;
-                await stream.CopyToAsync(fs);
-            }
+            // Ensure directory exists
+            Directory.CreateDirectory(folder);
 
+            // 2) Write file and close/flush before preview
+            stream.Position = 0;
+            await File.WriteAllBytesAsync(path, stream.ToArray());
+
+            if (!File.Exists(path))
+                throw new FileNotFoundException("Exported file not found for preview.", path);
+
+            // 3) Create the controller and assign a delegate
             var url = NSUrl.FromFilename(path);
-            var controller = UIDocumentInteractionController.FromUrl(url);
+            _docController = UIDocumentInteractionController.FromUrl(url);
+            _docController.Delegate = new DocPreviewDelegate();
 
-            // Obtain the top/root view controller for presenting the preview.
-            var rootVC = UIApplication.SharedApplication
-                .ConnectedScenes
-                .OfType<UIWindowScene>()
-                .First()
-                .Windows
-                .First()
-                .RootViewController;
+            // 4) Present on the main thread from the top-most controller
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                var presenter = GetTopViewController()
+                                ?? throw new InvalidOperationException("No presenter UIViewController found.");
+                // Show inline preview UI
+                _docController.PresentPreview(true);
+                // If you prefer the "Open In…" menu instead:
+                // _docController.PresentOptionsMenu(new CGRect(0,0,1,1), presenter.View, true);
+            });
+        }
 
-            controller.PresentPreview(true);
+        sealed class DocPreviewDelegate : UIDocumentInteractionControllerDelegate
+        {
+            public override UIViewController ViewControllerForPreview(UIDocumentInteractionController controller)
+                => GetTopViewController() ?? throw new InvalidOperationException("No presenter.");
+
+            public override UIView ViewForPreview(UIDocumentInteractionController controller)
+                => GetTopViewController()?.View ?? throw new InvalidOperationException("No presenter view.");
+
+            public override CGRect RectangleForPreview(UIDocumentInteractionController controller)
+                => GetTopViewController()?.View.Bounds ?? CGRect.Empty;
+
+            // Optional: when preview ends, you can clear the retained controller
+            public override void DidEndPreview(UIDocumentInteractionController controller)
+            {
+                // Release the strong reference
+                _docController = null;
+            }
+        }
+
+        static UIViewController? GetTopViewController()
+        {
+            var scene = UIApplication.SharedApplication.ConnectedScenes.OfType<UIWindowScene>().FirstOrDefault();
+            var window = scene?.Windows.FirstOrDefault(w => w.IsKeyWindow);
+            var vc = window?.RootViewController;
+            while (vc?.PresentedViewController != null)
+                vc = vc.PresentedViewController;
+            return vc;
         }
     }
 }

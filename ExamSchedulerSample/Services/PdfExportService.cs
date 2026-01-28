@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.ApplicationModel; // <-- for MainThread
 using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
 using Syncfusion.Pdf.Grid;
@@ -37,9 +38,10 @@ namespace ExamSchedulerSample.Services
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task ExportAllAsync(ProgramType program)
         {
-            var pdfBytes = CreatePdfBytes(program);
-            using var stream = new MemoryStream(pdfBytes);
-            stream.Position = 0;
+            // Heavy work off the UI thread to keep the app responsive.
+            var pdfBytes = await Task.Run(() => CreatePdfBytes(program));
+
+            using var stream = new MemoryStream(pdfBytes, writable: false);
             var fileName = $"ExamSchedule-{program}.pdf";
             await SaveService.SaveAndViewAsync(fileName, "application/pdf", stream);
         }
@@ -62,8 +64,12 @@ namespace ExamSchedulerSample.Services
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task PreviewAndPrintAsync(INavigation navigation, ProgramType program)
         {
-            var pdfBytes = CreatePdfBytes(program);
-            await navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes)));
+            // Heavy work off the UI thread.
+            var pdfBytes = await Task.Run(() => CreatePdfBytes(program));
+
+            // Navigation must occur on the UI thread.
+            await MainThread.InvokeOnMainThreadAsync(() =>
+                navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes))));
         }
 
         /// <summary>
