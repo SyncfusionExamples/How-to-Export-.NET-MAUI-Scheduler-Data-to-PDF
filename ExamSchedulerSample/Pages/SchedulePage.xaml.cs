@@ -1,7 +1,3 @@
-using System;
-using Microsoft.Maui.Controls;
-using ExamSchedulerSample.Services;
-
 namespace ExamSchedulerSample
 {
     /// <summary>
@@ -34,42 +30,74 @@ namespace ExamSchedulerSample
         {
             InitializeComponent();
 
-            var vm = new ScheduleViewModel(program);
-            BindingContext = vm;
+            var viewModel = new ScheduleViewModel(program);
+            BindingContext = viewModel;
 
-            Title = $"Exam Schedule - {vm.Program}";
+            Title = $"Exam Schedule - {viewModel.Program}";
         }
 
         /// <summary>
-        /// Handles the Export PDF button click and generates a program-specific PDF for the currently bound schedule.
+        /// Handles the ExportPDF button click and export's the current program’s schedule.
         /// </summary>
         private async void OnExportPdfClicked(object sender, EventArgs e)
         {
+            var button = sender as Button;
+            if (button != null)
+            {
+                button.IsEnabled = false;
+            }
+
             try
             {
-                var vm = BindingContext as ScheduleViewModel;
-                var program = vm?.Program ?? ProgramType.UG;
+                // Safely read the VM and program
+                if (BindingContext is not ScheduleViewModel viewModel)
+                {
+                    await DisplayAlert("Export PDF", "No data context available.", "OK");
+                    return;
+                }
 
-                // Prefer program-aware export if available.
-                await PdfExportService.ExportAllAsync(program);
+                var program = viewModel.Program;
+                var pdfBytes = await Task.Run(() => PdfExportService.GetPdfBytes(program));
+                var fileName = $"ExamSchedule-{program}.pdf";
+
+#if MACCATALYST
+                var exported = await SaveService.ExportAsync(fileName, pdfBytes);
+                if (exported)
+                {
+                    await DisplayAlert("Export PDF", "PDF export complete.", "OK");
+                }
+                else
+                {
+                    await DisplayAlert("Export PDF", "Export cancelled.", "OK");
+                }
+#else
+                using var ms = new MemoryStream(pdfBytes, writable: false);
+                await SaveService.SaveAndViewAsync(fileName, "application/pdf", ms);
+#endif
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Error", ex.Message, "OK");
             }
+            finally
+            {
+                if (button != null)
+                {
+                    button.IsEnabled = true;
+                }
+            }
         }
 
         /// <summary>
-        /// Handles the Preview/Print button click and opens a preview for the current program�s schedule.
+        /// Handles the Preview/Print button click and opens a preview for the current program’s schedule.
         /// </summary>
         private async void OnPreviewPrintClicked(object sender, EventArgs e)
         {
             try
             {
-                var vm = BindingContext as ScheduleViewModel;
-                var program = vm?.Program ?? ProgramType.UG;
+                var viewModel = BindingContext as ScheduleViewModel;
+                var program = viewModel?.Program ?? ProgramType.UG;
 
-                // Prefer program-aware preview if available.
                 await PdfExportService.PreviewAndPrintAsync(Navigation, program);
             }
             catch (Exception ex)

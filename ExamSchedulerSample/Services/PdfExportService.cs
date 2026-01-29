@@ -1,15 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.ApplicationModel; // <-- for MainThread
-using Syncfusion.Pdf;
+﻿using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
 using Syncfusion.Pdf.Grid;
-using ExamSchedulerSample; // for ProgramType, ExamAppointment, etc.
-
 using PointF = Syncfusion.Drawing.PointF;
 using RectangleF = Syncfusion.Drawing.RectangleF;
 using SizeF = Syncfusion.Drawing.SizeF;
@@ -23,6 +14,12 @@ namespace ExamSchedulerSample.Services
     /// </summary>
     public static class PdfExportService
     {
+        /// <summary>
+        /// Public helper to build the PDF bytes for a given program (UG/PG/MBA).
+        /// Exposes the internal PDF creation to UI code.
+        /// </summary>
+        public static byte[] GetPdfBytes(ProgramType program) => CreatePdfBytes(program);
+
         /// <summary>
         /// Builds the exam schedule PDF for the default program (UG)
         /// and invokes the platform save/view service.
@@ -71,14 +68,6 @@ namespace ExamSchedulerSample.Services
             await MainThread.InvokeOnMainThreadAsync(() =>
                 navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes))));
         }
-
-        /// <summary>
-        /// Creates the PDF document bytes for the complete exam export,
-        /// including a cover and three sections: timetable, duties, and hall availability.
-        /// Defaults to UG.
-        /// </summary>
-        /// <returns>The PDF document as a byte array.</returns>
-        private static byte[] CreatePdfBytes() => CreatePdfBytes(ProgramType.UG);
 
         /// <summary>
         /// Creates the PDF document bytes for the complete exam export for the specified program,
@@ -136,13 +125,6 @@ namespace ExamSchedulerSample.Services
             document.Save(memoryStream);
             return memoryStream.ToArray();
         }
-
-        /// <summary>
-        /// Draws the cover page with a banner, title, generation timestamp, and a simple contents list.
-        /// </summary>
-        /// <param name="graphics">The graphics context of the current PDF page.</param>
-        private static void DrawCover(PdfGraphics graphics)
-            => DrawCover(graphics, "University Exam Schedule");
 
         /// <summary>
         /// Draws the cover page with a banner, a custom title (e.g., with program),
@@ -203,11 +185,6 @@ namespace ExamSchedulerSample.Services
         /// Draws a <see cref="PdfGrid"/> with pagination support starting at (margin, <paramref name="startY"/>).
         /// Column headers are supplied explicitly via <paramref name="headers"/>.
         /// </summary>
-        /// <typeparam name="T">The row item type (anonymous types and POCOs are supported).</typeparam>
-        /// <param name="page">The PDF page to draw on.</param>
-        /// <param name="rows">The enumerable data rows to bind to the grid.</param>
-        /// <param name="headers">The array of column header texts.</param>
-        /// <param name="startY">The Y coordinate to start drawing the grid.</param>
         private static void DrawGridWithPagination<T>(PdfPage page, IEnumerable<T> rows, string[] headers, float startY)
         {
             const float margin = 48f;
@@ -243,8 +220,6 @@ namespace ExamSchedulerSample.Services
         /// <summary>
         /// Builds a flat, grid-ready set of timetable rows (date/session/course/hall/invigilator).
         /// </summary>
-        /// <param name="appointments">The list of exam appointments.</param>
-        /// <returns>An enumerable of anonymous objects suitable for binding to a PDF grid.</returns>
         private static IEnumerable<object> BuildTimetableRowsData(List<ExamAppointment> appointments)
         {
             return (appointments ?? new List<ExamAppointment>())
@@ -262,10 +237,6 @@ namespace ExamSchedulerSample.Services
         /// <summary>
         /// Builds the invigilator duty allocation rows from appointments, halls, and invigilators.
         /// </summary>
-        /// <param name="appointments">The exam appointment list.</param>
-        /// <param name="halls">The hall list.</param>
-        /// <param name="invigilators">The invigilator list.</param>
-        /// <returns>A list of <see cref="InvigilatorDutyRow"/> items.</returns>
         private static List<InvigilatorDutyRow> BuildInvigilatorDutyRows(
             List<ExamAppointment> appointments,
             List<Hall> halls,
@@ -296,9 +267,6 @@ namespace ExamSchedulerSample.Services
         /// <summary>
         /// Builds the hall availability rows (per date/session/hall) based on the scheduled appointments.
         /// </summary>
-        /// <param name="appointments">The exam appointment list.</param>
-        /// <param name="halls">The hall list.</param>
-        /// <returns>A list of <see cref="HallAvailabilityRow"/> entries describing capacity and status.</returns>
         private static List<HallAvailabilityRow> BuildHallAvailabilityRows(List<ExamAppointment> appointments, List<Hall> halls)
         {
             var resultRows = new List<HallAvailabilityRow>();
@@ -306,9 +274,9 @@ namespace ExamSchedulerSample.Services
             var hallList = halls ?? new List<Hall>();
 
             var dates = appointmentList
-                .Select(a => a.Start.Date)
+                .Select(appointment => appointment.Start.Date)
                 .Distinct()
-                .OrderBy(d => d);
+                .OrderBy(date => date);
 
             foreach (var date in dates)
             {
