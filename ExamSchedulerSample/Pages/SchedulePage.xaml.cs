@@ -30,8 +30,6 @@ namespace ExamSchedulerSample
 
             var viewModel = new ScheduleViewModel(program);
             BindingContext = viewModel;
-
-            Title = $"Exam Schedule - {viewModel.Program}";
         }
 
         /// <summary>
@@ -49,7 +47,7 @@ namespace ExamSchedulerSample
             {
                 if (BindingContext is not ScheduleViewModel viewModel)
                 {
-                    await DisplayAlert("Export PDF", "No data context available.", "OK");
+                    await DisplayAlertAsync("Export PDF", "No data context available.", "OK");
                     return;
                 }
 
@@ -61,11 +59,11 @@ namespace ExamSchedulerSample
                 var exported = await SaveService.ExportAsync(fileName, pdfBytes);
                 if (exported)
                 {
-                    await DisplayAlert("Export PDF", "PDF export complete.", "OK");
+                    await DisplayAlertAsync("Export PDF", "PDF export complete.", "OK");
                 }
                 else
                 {
-                    await DisplayAlert("Export PDF", "Export cancelled.", "OK");
+                    await DisplayAlertAsync("Export PDF", "Export cancelled.", "OK");
                 }
 #else
                 using var ms = new MemoryStream(pdfBytes, writable: false);
@@ -74,7 +72,7 @@ namespace ExamSchedulerSample
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", ex.Message, "OK");
+                await DisplayAlertAsync("Error", ex.Message, "OK");
             }
             finally
             {
@@ -99,7 +97,7 @@ namespace ExamSchedulerSample
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", ex.Message, "OK");
+                await DisplayAlertAsync("Error", ex.Message, "OK");
             }
         }
 

@@ -3,96 +3,94 @@
     x:Class="ExamSchedulerSample.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#F2F4F7">
+    BackgroundColor="White">
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="32">
-            
-            <Frame HasShadow="True"
-                   CornerRadius="20"
-                   Padding="24"
-                   BackgroundColor="#4B6EF6">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Exam Time Table"
-                           TextColor="White"
-                           FontSize="32"
-                           FontAttributes="Bold" />
 
+            <Border Background="#2F6AF6"
+                Padding="20"
+                HorizontalOptions="Fill">
+                <VerticalStackLayout Spacing="6" >
+                    <Label Text="Exam Time Table"
+                       TextColor="White"
+                       FontSize="28"
+                       FontAttributes="Bold" />
                     <Label Text="Select your program to view the exam timetable"
-                           TextColor="#E8EAFE"
-                           FontSize="14" />
+                       TextColor="#DDE7FF"
+                       FontSize="13" />
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
             <VerticalStackLayout Spacing="20">
-                <Frame Padding="16"
-                       CornerRadius="16"
-                       HasShadow="True"
-                       BackgroundColor="White">
+                <Border Padding="16"
+                        Stroke="Black"
+                        StrokeThickness="0.5"
+                        Background="White">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Engineering - UG"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="#333" />
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="#333" />
 
                         <Label Text="Open the semester exams details for Undergraduate Engineering."
-                               FontSize="13"
-                               TextColor="#777" />
+                           FontSize="13"
+                           TextColor="#777" />
 
                         <Button Text="Exam Schedule for UG students"
-                                BackgroundColor="#4B6EF6"
-                                TextColor="White"
-                                CornerRadius="12"
-                                HeightRequest="48"
-                                Clicked="OpenUg_Clicked"/>
+                            BackgroundColor="#4B6EF6"
+                            TextColor="White"
+                            CornerRadius="12"
+                            HeightRequest="48"
+                            Clicked="OpenUg_Clicked"/>
                     </VerticalStackLayout>
-                </Frame>
+                </Border>
 
-                <Frame Padding="16"
-                       CornerRadius="16"
-                       HasShadow="True"
-                       BackgroundColor="White">
+                <Border Padding="16"
+                        Stroke="Black"
+                        StrokeThickness="0.5"
+                        Background="White">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Engineering - PG"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="#333" />
+                        <Label  Text="Engineering - PG"
+                                FontSize="22"
+                                FontAttributes="Bold"
+                                TextColor="#333" />
 
                         <Label Text="Open the postgraduate engineering exam schedules."
                                FontSize="13"
                                TextColor="#777" />
 
                         <Button Text="Exam Schedule for PG students"
-                                BackgroundColor="#7A57D1"
-                                TextColor="White"
-                                CornerRadius="12"
-                                HeightRequest="48"
-                                Clicked="OpenPg_Clicked"/>
+                            BackgroundColor="#7A57D1"
+                            TextColor="White"
+                            CornerRadius="12"
+                            HeightRequest="48"
+                            Clicked="OpenPg_Clicked"/>
                     </VerticalStackLayout>
-                </Frame>
+                </Border>
 
-                <Frame Padding="16"
-                       CornerRadius="16"
-                       HasShadow="True"
-                       BackgroundColor="White">
+                <Border Padding="16"
+                        Stroke="Black"
+                        StrokeThickness="0.5"
+                        Background="White">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="MBA Program"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="#333" />
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="#333" />
 
                         <Label Text="Open the MBA exam schedule and details."
-                               FontSize="13"
-                               TextColor="#777" />
+                           FontSize="13"
+                           TextColor="#777" />
 
                         <Button Text="Exam Schedule for MBA students"
-                                BackgroundColor="#E66141"
-                                TextColor="White"
-                                CornerRadius="12"
-                                HeightRequest="48"
-                                Clicked="OpenMba_Clicked"/>
+                            BackgroundColor="#E66141"
+                            TextColor="White"
+                            CornerRadius="12"
+                            HeightRequest="48"
+                            Clicked="OpenMba_Clicked"/>
                     </VerticalStackLayout>
-                </Frame>
+                </Border>
 
             </VerticalStackLayout>
         </VerticalStackLayout>

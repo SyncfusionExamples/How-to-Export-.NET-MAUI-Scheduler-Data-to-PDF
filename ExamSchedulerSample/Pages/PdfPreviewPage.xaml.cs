@@ -30,33 +30,6 @@
         }
 
         /// <summary>
-        /// Handles the Print button click and attempts to print the loaded PDF document. Displays an alert if printing fails.
-        /// </summary>
-        /// <param name="sender">The event source (Print button).</param>
-        /// <param name="e">Event arguments.</param>
-        private void OnPrintClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                Viewer?.PrintDocument();
-            }
-            catch (Exception ex)
-            {
-                DisplayAlert("Print failed", ex.Message, "OK");
-            }
-        }
-
-        /// <summary>
-        /// Handles the Close button click and navigates back to the previous page.
-        /// </summary>
-        /// <param name="sender">The event source (Close button).</param>
-        /// <param name="e">Event arguments.</param>
-        private async void OnCloseClicked(object sender, EventArgs e)
-        {
-            await Navigation.PopAsync();
-        }
-
-        /// <summary>
         /// Unloads the document from the viewer and disposes the owned stream when the page is about to disappear, freeing resources promptly.
         /// </summary>
         protected override void OnDisappearing()

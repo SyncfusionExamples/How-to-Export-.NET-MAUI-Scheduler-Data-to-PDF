@@ -6,12 +6,5 @@
     x:Class="ExamSchedulerSample.PdfPreviewPage"
     Title="Preview / Print">
 
-    <Grid RowDefinitions="Auto,*" Padding="10">
-        <HorizontalStackLayout Spacing="8">
-            <Button Text="Print" Clicked="OnPrintClicked" />
-            <Button Text="Close" Clicked="OnCloseClicked" />
-        </HorizontalStackLayout>
-
-        <pdf:SfPdfViewer x:Name="Viewer" Grid.Row="1" />
-    </Grid>
+    <pdf:SfPdfViewer x:Name="Viewer" />
 </ContentPage>
