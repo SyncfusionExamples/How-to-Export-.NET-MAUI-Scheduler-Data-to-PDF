@@ -1,8 +1,7 @@
 ﻿namespace ExamSchedulerSample
 {
     /// <summary>
-    /// Represents the introductory landing page of the application.
-    /// Allows the user to select their academic program (UG, PG, MBA) and navigate to the corresponding exam schedule page.
+    /// Represents the introductory landing page of the application. Allows the user to select their academic program (UG, PG, MBA) and navigate to the corresponding exam schedule page.
     /// </summary>
     public partial class MainPage : ContentPage
     {

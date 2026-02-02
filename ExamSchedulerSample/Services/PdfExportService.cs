@@ -8,34 +8,28 @@ using SizeF = Syncfusion.Drawing.SizeF;
 namespace ExamSchedulerSample.Services
 {
     /// <summary>
-    /// Provides PDF export and preview services for exam schedule data,
-    /// including timetable, invigilator duties, and hall availability.
-    /// Supports program-specific (UG/PG/MBA) exports.
+    /// Provides PDF export and preview services for exam schedule data, including timetable, invigilator duties, and hall availability. Supports program-specific (UG/PG/MBA) exports.
     /// </summary>
     public static class PdfExportService
     {
         /// <summary>
-        /// Public helper to build the PDF bytes for a given program (UG/PG/MBA).
-        /// Exposes the internal PDF creation to UI code.
+        /// Public helper to build the PDF bytes for a given program (UG/PG/MBA). Exposes the internal PDF creation to UI code.
         /// </summary>
         public static byte[] GetPdfBytes(ProgramType program) => CreatePdfBytes(program);
 
         /// <summary>
-        /// Builds the exam schedule PDF for the default program (UG)
-        /// and invokes the platform save/view service.
+        /// Builds the exam schedule PDF for the default program (UG) and invokes the platform save/view service.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static Task ExportAllAsync() => ExportAllAsync(ProgramType.UG);
 
         /// <summary>
-        /// Builds the exam schedule PDF for the specified program and
-        /// invokes the platform save/view service.
+        /// Builds the exam schedule PDF for the specified program and invokes the platform save/view service.
         /// </summary>
         /// <param name="program">The program to export (UG/PG/MBA).</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task ExportAllAsync(ProgramType program)
         {
-            // Heavy work off the UI thread to keep the app responsive.
             var pdfBytes = await Task.Run(() => CreatePdfBytes(program));
 
             using var stream = new MemoryStream(pdfBytes, writable: false);
@@ -44,8 +38,7 @@ namespace ExamSchedulerSample.Services
         }
 
         /// <summary>
-        /// Builds the exam schedule PDF for the default program (UG) and navigates
-        /// to a preview page that can handle printing/sharing.
+        /// Builds the exam schedule PDF for the default program (UG) and navigates to a preview page that can handle printing/sharing.
         /// </summary>
         /// <param name="navigation">The MAUI navigation instance used to push the preview page.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -53,25 +46,20 @@ namespace ExamSchedulerSample.Services
             PreviewAndPrintAsync(navigation, ProgramType.UG);
 
         /// <summary>
-        /// Builds the exam schedule PDF for the specified program and navigates
-        /// to a preview page that can handle printing/sharing.
+        /// Builds the exam schedule PDF for the specified program and navigates to a preview page that can handle printing/sharing.
         /// </summary>
         /// <param name="navigation">The MAUI navigation instance used to push the preview page.</param>
         /// <param name="program">The program to export/preview (UG/PG/MBA).</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task PreviewAndPrintAsync(INavigation navigation, ProgramType program)
         {
-            // Heavy work off the UI thread.
             var pdfBytes = await Task.Run(() => CreatePdfBytes(program));
 
-            // Navigation must occur on the UI thread.
-            await MainThread.InvokeOnMainThreadAsync(() =>
-                navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes))));
+            await MainThread.InvokeOnMainThreadAsync(() => navigation.PushAsync(new PdfPreviewPage(new MemoryStream(pdfBytes))));
         }
 
         /// <summary>
-        /// Creates the PDF document bytes for the complete exam export for the specified program,
-        /// including a cover and three sections: timetable, duties, and hall availability.
+        /// Creates the PDF document bytes for the complete exam export for the specified program, including a cover and three sections: timetable, duties, and hall availability.
         /// </summary>
         /// <param name="program">The program to export (UG/PG/MBA).</param>
         /// <returns>The PDF document as a byte array.</returns>
@@ -127,8 +115,7 @@ namespace ExamSchedulerSample.Services
         }
 
         /// <summary>
-        /// Draws the cover page with a banner, a custom title (e.g., with program),
-        /// generation timestamp, and a simple contents list.
+        /// Draws the cover page with a banner, a custom title (e.g., with program), generation timestamp, and a simple contents list.
         /// </summary>
         /// <param name="graphics">The graphics context of the current PDF page.</param>
         /// <param name="title">Custom title text to render on the cover.</param>
@@ -182,8 +169,7 @@ namespace ExamSchedulerSample.Services
         }
 
         /// <summary>
-        /// Draws a <see cref="PdfGrid"/> with pagination support starting at (margin, <paramref name="startY"/>).
-        /// Column headers are supplied explicitly via <paramref name="headers"/>.
+        /// Draws a <see cref="PdfGrid"/> with pagination support starting at (margin, <paramref name="startY"/>). Column headers are supplied explicitly via <paramref name="headers"/>.
         /// </summary>
         private static void DrawGridWithPagination<T>(PdfPage page, IEnumerable<T> rows, string[] headers, float startY)
         {

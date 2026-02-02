@@ -1,8 +1,5 @@
-using System.IO;
-using System.Threading.Tasks;
 using Android.Content;
 using AndroidX.Core.Content;
-using Microsoft.Maui.ApplicationModel;
 
 namespace ExamSchedulerSample
 {
@@ -25,7 +22,6 @@ namespace ExamSchedulerSample
         /// <returns>A task representing the asynchronous save and view operation.</returns>
         public static async partial Task SaveAndViewAsync(string filename, string contentType, MemoryStream stream)
         {
-            // Save to app cache
             var path = Path.Combine(FileSystem.CacheDirectory, filename);
             using (var fs = File.Open(path, FileMode.Create, FileAccess.Write))
             {
@@ -35,7 +31,6 @@ namespace ExamSchedulerSample
 
             var context = Platform.CurrentActivity ?? Android.App.Application.Context;
 
-            // Build content Uri via AndroidX FileProvider
             var file = new Java.IO.File(path);
             file.SetReadable(true);
             var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
@@ -43,12 +38,10 @@ namespace ExamSchedulerSample
                 $"{context.PackageName}.provider",
                 file);
 
-            // Build intent to view
             var intent = new Intent(Intent.ActionView);
             intent.SetDataAndType(uri, contentType);
             intent.SetFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.NewTask);
 
-            // If no app can handle it, show a chooser to avoid crash
             var handler = intent.ResolveActivity(context.PackageManager);
             if (handler is null)
             {

@@ -39,7 +39,7 @@
                                FontSize="13"
                                TextColor="#777" />
 
-                        <Button Text="Open UG Schedule"
+                        <Button Text="Exam Schedule for UG students"
                                 BackgroundColor="#4B6EF6"
                                 TextColor="White"
                                 CornerRadius="12"
@@ -62,7 +62,7 @@
                                FontSize="13"
                                TextColor="#777" />
 
-                        <Button Text="Open PG Schedule"
+                        <Button Text="Exam Schedule for PG students"
                                 BackgroundColor="#7A57D1"
                                 TextColor="White"
                                 CornerRadius="12"
@@ -85,7 +85,7 @@
                                FontSize="13"
                                TextColor="#777" />
 
-                        <Button Text="Open MBA Schedule"
+                        <Button Text="Exam Schedule for MBA students"
                                 BackgroundColor="#E66141"
                                 TextColor="White"
                                 CornerRadius="12"

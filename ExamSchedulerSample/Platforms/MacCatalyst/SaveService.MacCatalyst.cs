@@ -29,7 +29,9 @@ namespace ExamSchedulerSample
             await File.WriteAllBytesAsync(filePath, stream.ToArray()).ConfigureAwait(false);
 
             if (!File.Exists(filePath))
+            {
                 throw new FileNotFoundException("File not found after write.", filePath);
+            }
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
@@ -38,8 +40,7 @@ namespace ExamSchedulerSample
                     DataSource = new SingleFilePreviewDataSource(filePath)
                 };
 
-                var presentingViewController = GetTopViewController()
-                    ?? throw new InvalidOperationException("No presenter UIViewController found.");
+                var presentingViewController = GetTopViewController() ?? throw new InvalidOperationException("No presenter UIViewController found.");
 
                 presentingViewController.PresentViewController(previewController, true, null);
             });
@@ -81,10 +82,6 @@ namespace ExamSchedulerSample
                     {
                         documentPicker?.DismissViewController(true, null);
                     }
-                    catch
-                    {
-                        // ignored
-                    }
                     finally
                     {
                         completionSource.TrySetResult(false);
@@ -112,8 +109,7 @@ namespace ExamSchedulerSample
                     documentPicker = null;
                 };
 
-                var presentingViewController = GetTopViewController()
-                    ?? throw new InvalidOperationException("No presenter UIViewController found.");
+                var presentingViewController = GetTopViewController() ?? throw new InvalidOperationException("No presenter UIViewController found.");
 
                 presentingViewController.PresentViewController(documentPicker, true, null);
             });
@@ -161,8 +157,7 @@ namespace ExamSchedulerSample
             public override nint PreviewItemCount(QLPreviewController controller) => 1;
 
             /// <inheritdoc/>
-            public override IQLPreviewItem GetPreviewItem(QLPreviewController controller, nint index)
-                => new SingleFilePreviewItem(_filePath, Path.GetFileName(_filePath));
+            public override IQLPreviewItem GetPreviewItem(QLPreviewController controller, nint index) => new SingleFilePreviewItem(_filePath, Path.GetFileName(_filePath));
         }
 
         /// <summary>
@@ -179,13 +174,19 @@ namespace ExamSchedulerSample
             var viewController = keyWindow?.RootViewController;
 
             while (viewController?.PresentedViewController != null)
+            {
                 viewController = viewController.PresentedViewController;
+            }
 
             if (viewController is UINavigationController navigationController)
+            {
                 viewController = navigationController.VisibleViewController ?? navigationController.TopViewController;
+            }
 
             if (viewController is UITabBarController tabBarController && tabBarController.SelectedViewController != null)
+            {
                 viewController = tabBarController.SelectedViewController;
+            }
 
             return viewController;
         }

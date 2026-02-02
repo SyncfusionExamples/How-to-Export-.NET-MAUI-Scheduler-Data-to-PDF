@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Maui.Graphics;
-
-namespace ExamSchedulerSample
+﻿namespace ExamSchedulerSample
 {
     /// <summary>
     /// Identifies the academic program for which exam data is generated.
@@ -16,15 +11,7 @@ namespace ExamSchedulerSample
     }
 
     /// <summary>
-    /// Provides deterministic data (halls, invigilators, courses) and utility methods
-    /// for building complete exam schedules used by the app. Includes program-aware
-    /// scheduling for UG, PG, and MBA with constraints:
-    /// <list type="bullet">
-    /// <item><description>No Sunday exams.</description></item>
-    /// <item><description>Engineering (UG/PG): adjacent semester pairs per department (Option A).</description></item>
-    /// <item><description>MBA: fixed pairs (1,3) then (2,4) on alternating workdays.</description></item>
-    /// <item><description>4 slots/day (FN×2, AN×2), hall rotation, and minimal invigilator repeats per workday.</description></item>
-    /// </list>
+    /// Provides deterministic data (halls, invigilators, courses) and utility methods for building complete exam schedules used by the app.
     /// </summary>
     public static class SampleDataPage
     {
@@ -154,8 +141,7 @@ namespace ExamSchedulerSample
         public static List<Course> GetCourses() => GetCourses(ProgramType.UG);
 
         /// <summary>
-        /// Computes a standard exam slot for the given <paramref name="date"/> and <paramref name="session"/>.
-        /// FN → 09:30–12:30, AN → 14:00–17:00.
+        /// Computes a standard exam slot for the given <paramref name="date"/> and <paramref name="session"/>. FN → 09:30–12:30, AN → 14:00–17:00.
         /// </summary>
         /// <param name="date">The calendar date of the exam.</param>
         /// <param name="session">The session type (Forenoon or Afternoon).</param>
@@ -200,7 +186,6 @@ namespace ExamSchedulerSample
             var invigilators = GetInvigilators();
             var courses = GetCourses(program);
 
-            // Build department -> semester -> queue of courses
             var departments = courses
                 .Select(course => course.Department)
                 .Distinct()
@@ -277,7 +262,6 @@ namespace ExamSchedulerSample
                     if (!HasAnyCoursesLeft(departmentSemesterQueues))
                         break;
 
-                    // Find next department (round-robin) that still has any course in today's allowed semesters
                     if (!TryPickDeptWithTodaySemCourses(
                             departments,
                             departmentSemesterQueues,
@@ -285,21 +269,17 @@ namespace ExamSchedulerSample
                             departmentStartIndex,
                             out var chosenDepartment))
                     {
-                        // No department can supply a course for today's pairs; stop filling further slots
                         break;
                     }
 
                     var (semester1, semester2) = todaySemesterPairsByDepartment[chosenDepartment];
 
-                    // Pick a course from allowed semesters (prefer lower semester first)
                     if (!TryDequeueCourse(departmentSemesterQueues[chosenDepartment], semester1, semester2, out var courseToSchedule))
                     {
-                        // Guard: if not available, rotate department start and continue
                         departmentStartIndex = (Array.IndexOf(departments, chosenDepartment) + 1) % departments.Length;
                         continue;
                     }
 
-                    // Choose invigilator (avoid repeating within the same day if possible).
                     Invigilator selectedInvigilator = null!;
                     int invigilatorSelectionAttempts = 0;
                     while (invigilatorSelectionAttempts < invigilators.Count)
@@ -331,11 +311,9 @@ namespace ExamSchedulerSample
                     appointment.ResourceIds.Add(slot.hall.Id);
                     appointments.Add(appointment);
 
-                    // Rotate department start for next slot
                     departmentStartIndex = (Array.IndexOf(departments, chosenDepartment) + 1) % departments.Length;
                 }
 
-                // Advance to next day (workday index only)
                 day = day.AddDays(1);
                 workdayIndex++;
             }
@@ -364,7 +342,9 @@ namespace ExamSchedulerSample
 
             // Engineering (UG/PG) – Option A: adjacent pairs
             if (semestersAscending.Count == 0)
+            {
                 return pairSequence;
+            }
 
             if (semestersAscending.Count == 1)
             {
@@ -387,13 +367,12 @@ namespace ExamSchedulerSample
                 return pairSequence;
             }
 
-            // Even or >=4: pair adjacent (1,2), (3,4), (5,6), ...
             for (int index = 0; index < semestersAscending.Count; index += 2)
             {
                 var semester1 = semestersAscending[index];
                 var semester2 = (index + 1 < semestersAscending.Count)
                     ? semestersAscending[index + 1]
-                    : semestersAscending[index]; // guard odd
+                    : semestersAscending[index];
                 pairSequence.Add((semester1, semester2));
             }
 
@@ -419,8 +398,7 @@ namespace ExamSchedulerSample
         }
 
         /// <summary>
-        /// Finds the next department (round-robin) that has at least one course
-        /// in today's allowed semester pair.
+        /// Finds the next department (round-robin) that has at least one course in today's allowed semester pair.
         /// </summary>
         /// <param name="departments">Ordered list of departments.</param>
         /// <param name="departmentSemesterQueues">Department to semester queues map.</param>

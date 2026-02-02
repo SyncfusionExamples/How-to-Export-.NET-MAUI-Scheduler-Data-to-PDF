@@ -7,15 +7,12 @@
     public partial class PdfPreviewPage : ContentPage
     {
         /// <summary>
-        /// Holds an owned copy of the PDF content so that the viewer can access it safely even if the original stream is disposed.
-        /// Disposed when the page disappears.
+        /// Holds an owned copy of the PDF content so that the viewer can access it safely even if the original stream is disposed. Disposed when the page disappears.
         /// </summary>
         private MemoryStream? _ownedStream;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PdfPreviewPage"/> class.
-        /// Accepts any stream (seekable or not), copies its content into an
-        /// internally owned <see cref="MemoryStream"/>, and loads it into the viewer.
+        /// Initializes a new instance of the <see cref="PdfPreviewPage"/> class. Accepts any stream (seekable or not), copies its content into an internally owned <see cref="MemoryStream"/>, and loads it into the viewer.
         /// </summary>
         /// <param name="pdfStream">
         /// The source stream containing PDF bytes. It can be seekable or non-seekable.
@@ -26,7 +23,6 @@
             InitializeComponent();
 
             _ownedStream = new MemoryStream();
-            // If the source stream is seekable, read from the beginning; otherwise read from current position.
             pdfStream.Position = pdfStream.CanSeek ? 0 : pdfStream.Position;
             pdfStream.CopyTo(_ownedStream);
             _ownedStream.Position = 0;

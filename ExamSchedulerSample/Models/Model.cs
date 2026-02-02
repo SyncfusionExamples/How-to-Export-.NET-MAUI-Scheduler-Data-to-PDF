@@ -10,8 +10,7 @@ namespace ExamSchedulerSample
     public enum ExamSession { FN, AN }
 
     /// <summary>
-    /// Represents an academic course containing basic information
-    /// such as code, title, semester, and department.
+    /// Represents an academic course containing basic information such as code, title, semester, and department.
     /// </summary>
     public sealed class Course
     {
@@ -95,8 +94,7 @@ namespace ExamSchedulerSample
     }
 
     /// <summary>
-    /// Represents a schedulable exam appointment entry used by the Scheduler view.
-    /// Supports resource grouping by hall and invigilator.
+    /// Represents a schedulable exam appointment entry used by the Scheduler view. Supports resource grouping by hall and invigilator.
     /// </summary>
     public sealed class ExamAppointment
     {
