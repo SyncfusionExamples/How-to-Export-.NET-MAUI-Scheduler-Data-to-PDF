@@ -42,8 +42,7 @@ namespace ExamSchedulerSample.Services
         /// </summary>
         /// <param name="navigation">The MAUI navigation instance used to push the preview page.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static Task PreviewAndPrintAsync(INavigation navigation) =>
-            PreviewAndPrintAsync(navigation, ProgramType.UG);
+        public static Task PreviewAndPrintAsync(INavigation navigation) => PreviewAndPrintAsync(navigation, ProgramType.UG);
 
         /// <summary>
         /// Builds the exam schedule PDF for the specified program and navigates to a preview page that can handle printing/sharing.
