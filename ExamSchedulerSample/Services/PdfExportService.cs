@@ -237,12 +237,8 @@ namespace ExamSchedulerSample.Services
                 {
                     Date = appointment.Start.Date,
                     Session = appointment.Start.Hour < 13 ? ExamSession.FN : ExamSession.AN,
-                    Invigilator = invigilatorById.TryGetValue(appointment.InvigilatorId, out var invName)
-                        ? invName
-                        : (appointment.InvigilatorName ?? appointment.InvigilatorId),
-                    Hall = hallById.TryGetValue(appointment.HallId, out var hallName)
-                        ? hallName
-                        : (appointment.HallName ?? appointment.HallId),
+                    Invigilator = invigilatorById.TryGetValue(appointment.InvigilatorId, out var invName) ? invName : (appointment.InvigilatorName ?? appointment.InvigilatorId),
+                    Hall = hallById.TryGetValue(appointment.HallId, out var hallName) ? hallName : (appointment.HallName ?? appointment.HallId),
                     Course = appointment.Subject
                 });
             }
@@ -259,9 +255,9 @@ namespace ExamSchedulerSample.Services
             var hallList = halls ?? new List<Hall>();
 
             var dates = appointmentList
-                .Select(appointment => appointment.Start.Date)
-                .Distinct()
-                .OrderBy(date => date);
+                            .Select(appointment => appointment.Start.Date)
+                            .Distinct()
+                            .OrderBy(date => date);
 
             foreach (var date in dates)
             {

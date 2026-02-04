@@ -91,7 +91,6 @@
                             Clicked="OpenMba_Clicked"/>
                     </VerticalStackLayout>
                 </Border>
-
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

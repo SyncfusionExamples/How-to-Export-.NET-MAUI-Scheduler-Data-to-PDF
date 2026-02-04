@@ -187,10 +187,10 @@
             var courses = GetCourses(program);
 
             var departments = courses
-                .Select(course => course.Department)
-                .Distinct()
-                .OrderBy(department => department)
-                .ToArray();
+                                .Select(course => course.Department)
+                                .Distinct()
+                                .OrderBy(department => department)
+                                .ToArray();
 
             var departmentSemesterQueues = new Dictionary<string, Dictionary<int, Queue<Course>>>(StringComparer.Ordinal);
             foreach (var department in departments)
@@ -201,6 +201,7 @@
                 {
                     semesterQueueMap[semesterGroup.Key] = new Queue<Course>(semesterGroup);
                 }
+
                 departmentSemesterQueues[department] = semesterQueueMap;
             }
 
@@ -243,9 +244,9 @@
 
                 int hallRotationIndex = workdayIndex;
                 var rotatedHalls = halls
-                    .Skip(hallRotationIndex % halls.Count)
-                    .Concat(halls.Take(hallRotationIndex % halls.Count))
-                    .ToList();
+                                    .Skip(hallRotationIndex % halls.Count)
+                                    .Concat(halls.Take(hallRotationIndex % halls.Count))
+                                    .ToList();
 
                 var dayPlan = new (ExamSession session, Hall hall)[]
                 {
@@ -260,7 +261,9 @@
                 foreach (var slot in dayPlan)
                 {
                     if (!HasAnyCoursesLeft(departmentSemesterQueues))
+                    {
                         break;
+                    }
 
                     if (!TryPickDeptWithTodaySemCourses(
                             departments,
@@ -287,9 +290,13 @@
                         selectedInvigilator = invigilators[invigilatorGlobalIndex % invigilators.Count];
                         invigilatorGlobalIndex++;
                         if (!usedInvigilatorIdsToday.Contains(selectedInvigilator.Id))
+                        {
                             break;
+                        }
+
                         invigilatorSelectionAttempts++;
                     }
+
                     usedInvigilatorIdsToday.Add(selectedInvigilator.Id);
 
                     var (start, end) = Slot(day, slot.session);
@@ -370,9 +377,7 @@
             for (int index = 0; index < semestersAscending.Count; index += 2)
             {
                 var semester1 = semestersAscending[index];
-                var semester2 = (index + 1 < semestersAscending.Count)
-                    ? semestersAscending[index + 1]
-                    : semestersAscending[index];
+                var semester2 = (index + 1 < semestersAscending.Count) ? semestersAscending[index + 1] : semestersAscending[index];
                 pairSequence.Add((semester1, semester2));
             }
 
@@ -394,6 +399,7 @@
                         return true;
                 }
             }
+
             return false;
         }
 
@@ -440,8 +446,7 @@
         /// <returns><c>true</c> if any queue has at least one course; otherwise <c>false</c>.</returns>
         private static bool HasCourseInSemesters(Dictionary<int, Queue<Course>> semesterQueueMap, int semester1, int semester2)
         {
-            return (semesterQueueMap.TryGetValue(semester1, out var queueForSemester1) && queueForSemester1.Count > 0)
-                || (semesterQueueMap.TryGetValue(semester2, out var queueForSemester2) && queueForSemester2.Count > 0);
+            return (semesterQueueMap.TryGetValue(semester1, out var queueForSemester1) && queueForSemester1.Count > 0) || (semesterQueueMap.TryGetValue(semester2, out var queueForSemester2) && queueForSemester2.Count > 0);
         }
 
         /// <summary>

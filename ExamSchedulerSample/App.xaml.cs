@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-namespace ExamSchedulerSample
+﻿namespace ExamSchedulerSample
 {
     public partial class App : Application
     {
