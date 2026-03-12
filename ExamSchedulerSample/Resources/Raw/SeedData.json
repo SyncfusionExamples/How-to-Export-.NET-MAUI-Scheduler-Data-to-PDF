@@ -1,0 +1,70 @@
+{
+    "Projects": [
+        {
+            "Name": "Balance",
+            "Description": "Improve work-life balance.",
+            "Icon": "\uea28",
+            "Category": { "Title": "work", "Color": "#3068df" },
+            "Tags": [
+                { "Title": "work", "Color": "#3068df" }
+            ],
+            "Tasks": [
+                { "Title": "Survey Employees", "IsCompleted": false },
+                { "Title": "Analyze Survey Results", "IsCompleted": false },
+                { "Title": "Develop Action Plan", "IsCompleted": false }
+            ]
+        },
+        {
+            "Name": "Personal",
+            "Description": "Learn to speak another language.",
+            "Icon": "\uf8fe",
+            "Category": { "Title": "education", "Color": "#8800FF" },
+            "Tags": [
+                { "Title": "personal", "Color": "#FF4500" }
+            ],
+            "Tasks": [
+                { "Title": "Read a Book", "IsCompleted": false },
+                { "Title": "Attend a Workshop", "IsCompleted": false },
+                { "Title": "Practice a Hobby", "IsCompleted": false }
+            ]
+        },
+        {
+            "Name": "Fitness",
+            "Description": "Promote health and fitness activities",
+            "Icon": "\uf837",
+            "Category": { "Title": "self", "Color": "#FF3300" },
+            "Tags": [
+                { "Title": "health", "Color": "#32CD32" }
+            ],
+            "Tasks": [
+                { "Title": "Morning Yoga", "IsCompleted": false },
+                { "Title": "Evening Run", "IsCompleted": false },
+                { "Title": "Healthy Cooking Class", "IsCompleted": false }
+            ]
+        },
+        {
+            "Name": "Family and Friends",
+            "Description": "Strengthen relationships with family and friends.",
+            "Icon": "\uf5a9",
+            "Category": { "Title": "relationships", "Color": "#FF9900" },
+            "Tags": [
+                { "Title": "family", "Color": "#1E90FF" },
+                { "Title": "friends", "Color": "#FF69B4" }
+            ],
+            "Tasks": [
+                { "Title": "Plan a Family Reunion", "IsCompleted": false },
+                { "Title": "Organize a Friends' Get-together", "IsCompleted": false },
+                { "Title": "Weekly Phone Calls", "IsCompleted": false }
+            ]
+        }
+    ]
+    ],
+    "Invigilators": [
+        { "Name": "Dr. Alice Kumar", "Email": "alice.kumar@university.edu", "Phone": "555-0101", "Notes": "Prefers mornings", "AvailableDates": ["2026-01-21","2026-01-22","2026-01-23"] },
+        { "Name": "Mr. Bob Singh", "Email": "bob.singh@university.edu", "Phone": "555-0102", "Notes": "Can do any day", "AvailableDates": ["2026-01-21","2026-01-24"] }
+    ],
+    "ExamHalls": [
+        { "Name": "Hall A", "Capacity": 120, "Location": "Building 1", "Slots": [ { "Start":"2026-01-21T09:00:00","End":"2026-01-21T12:00:00" }, { "Start":"2026-01-21T13:00:00","End":"2026-01-21T16:00:00" } ] },
+        { "Name": "Hall B", "Capacity": 80, "Location": "Building 2", "Slots": [ { "Start":"2026-01-22T09:00:00","End":"2026-01-22T12:00:00" } ] }
+    ]
+}

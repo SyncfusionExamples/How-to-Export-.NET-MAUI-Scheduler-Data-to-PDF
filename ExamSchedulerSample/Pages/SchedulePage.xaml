@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:scheduler="clr-namespace:Syncfusion.Maui.Scheduler;assembly=Syncfusion.Maui.Scheduler"
+    xmlns:local="clr-namespace:ExamSchedulerSample"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    x:Class="ExamSchedulerSample.SchedulePage"
+    Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" BackgroundColor="RoyalBlue" VerticalOptions="Start" Padding="6">
+
+            <Label Grid.Column="0"
+                   Text="Exam Schedule"
+                   TextColor="White"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center" />
+
+            <HorizontalStackLayout Grid.Column="1"
+                                   Spacing="8"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="End">
+                <Button Text="Export PDF"
+                        BackgroundColor="Transparent"
+                        FontSize="16"
+                        TextColor="White"
+                        Padding="10"
+                        Clicked="OnExportPdfClicked" />
+                <Button Text="Preview/Print"
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        FontSize="16"
+                        Padding="10"
+                        Clicked="OnPreviewPrintClicked" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <scheduler:SfScheduler  x:Name="Scheduler"
+                                Grid.Row="1"
+                                View="TimelineWeek"
+                                AppointmentsSource="{Binding Appointments}"
+                                ShowTodayButton="False">
+
+        <scheduler:SfScheduler.AppointmentMapping>
+            <scheduler:SchedulerAppointmentMapping
+                                        StartTime="Start"
+                                        EndTime="End"
+                                        Subject="Subject"
+                                        Notes="Notes"
+                                        Id="Id"
+                                        ResourceIds="ResourceIds"
+                                        Background="BackgroundBrush" />
+        </scheduler:SfScheduler.AppointmentMapping>
+
+        <scheduler:SfScheduler.ResourceView>
+            <scheduler:SchedulerResourceView Resources="{Binding Halls}">
+                <scheduler:SchedulerResourceView.Mapping>
+                    <scheduler:SchedulerResourceMapping
+                                        Id="Id"
+                                        Name="Name"
+                                        Background="BackgroundBrush" />
+                </scheduler:SchedulerResourceView.Mapping>
+            </scheduler:SchedulerResourceView>
+        </scheduler:SfScheduler.ResourceView>
+
+        <scheduler:SfScheduler.TimelineView>
+            <scheduler:SchedulerTimelineView
+                                        StartHour="8"
+                                        EndHour="18"
+                                        TimeInterval="01:00:00"
+                                        TimeIntervalWidth="120">
+                <scheduler:SchedulerTimelineView.AppointmentTemplate>
+                    <DataTemplate>
+                        <Border
+                                Background="{Binding Background}"
+                                Stroke="#66000000"
+                                StrokeThickness="1"
+                                Padding="6">
+                            <Border.StrokeShape>
+                                <shapes:RoundRectangle CornerRadius="6" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="2">
+                                <Label
+                                        Text="{Binding Subject}"
+                                        FontAttributes="Bold"
+                                        TextColor="White"
+                                        FontSize="13"
+                                        LineBreakMode="TailTruncation" />
+                                <Label
+                                        Text="{Binding Notes}"
+                                        FontSize="11"
+                                        TextColor="White"
+                                        Opacity="0.95"
+                                        LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </scheduler:SchedulerTimelineView.AppointmentTemplate>
+            </scheduler:SchedulerTimelineView>
+        </scheduler:SfScheduler.TimelineView>
+    </scheduler:SfScheduler>
+    </Grid>
+</ContentPage>
